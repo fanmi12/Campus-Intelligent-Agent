@@ -13,6 +13,12 @@ desktop.ini
 browser_data/
 .claude/
 .playwright-cli/
+.privacy-local.json
+
+# Machine-specific operations stay local; publish generic deployment examples.
+/scripts/
+/web/deploy/*
+!/web/deploy/examples/
 
 # Dependencies and generated build caches
 node_modules/
@@ -45,9 +51,3 @@ outputs/**/.previews/
 # Deployment transfer artifacts may contain the application database.
 outputs/deployment/*.db
 outputs/deployment/*.tar.gz
-
-# Local operational files must never be published.
-/scripts/
-/web/deploy/*
-!/web/deploy/examples/
-.privacy-local.json

@@ -7,7 +7,6 @@
 <p align="center">查校园资料、拍通知加日历，让回答变成可以操作的卡片。</p>
 
 <p align="center">
-  <a href="https://agent.example.com">在线体验</a> ·
   <a href="#快速开始">快速开始</a> ·
   <a href="web/README.md">开发与部署文档</a> ·
   <a href="#许可证与第三方内容">许可证</a>
@@ -148,7 +147,7 @@ pnpm dev
 pnpm kb:ingest
 ```
 
-官网导入、附件转写和检索评测的详细用法见 [`web/README.md`](web/README.md)。采集工具说明见 [`crawlers/README.md`](crawlers/README.md)；采集流程独立于应用运行，启动网页不需要执行爬虫。
+官网导入、附件转写和检索评测的详细用法见 [`web/README.md`](web/README.md)。采集工具说明见 [`crawlers/README.md`](crawlers/README.md)；采集流程独立于应用运行，启动网页不需要执行爬虫。机器专用的采集、核验与维护脚本仅保存在本地。
 
 ## 常用开发命令
 
@@ -178,7 +177,7 @@ docker compose up -d --build
 
 Caddy 自动管理 HTTPS，数据库存入 `app_data` 卷，知识库通过只读目录挂载。备份时同时保留数据库、知识库和部署环境配置。首次启动后的知识库同步进度可通过 `docker compose logs -f app` 查看。
 
-生产构建、本机直启、Nginx 与 systemd 配置详见 [`web/README.md`](web/README.md) 和 [`web/deploy/`](web/deploy/)。仓库根目录的 `scripts/*campus*.py` 包含本项目现有服务器的维护脚本，复用到其他服务器前需修改目标配置。
+生产构建与本机直启详见 [`web/README.md`](web/README.md)，Nginx 与 systemd 的通用示例见 [`web/deploy/examples/`](web/deploy/examples/)。示例使用保留示例域名和本机回环地址；服务器地址、登录用户与生产配置由部署者在本地填写，不进入仓库。
 
 ## 目录结构
 
@@ -191,20 +190,22 @@ Campus-Intelligent-Agent/
 │   ├── knowledge/           整理后的知识库
 │   ├── public/              头像、餐品图片与静态资源
 │   ├── scripts/             入库、评测与协议检查
-│   ├── deploy/              Nginx / systemd 配置
+│   ├── deploy/examples/     Nginx / systemd 通用部署示例
 │   └── .env.example         环境配置模板
-├── scripts/                 采集、整理、核验与维护脚本
+├── tools/                   公开内容检查工具
 ├── crawlers/                采集工具与上游版本记录
 ├── docs/images/             README 界面截图
 ├── LICENSE                  原创代码的 MIT 许可证
 └── THIRD_PARTY_NOTICES.md    第三方代码与资料的许可范围
 ```
 
-`.env`、密钥、浏览器登录态、依赖目录、构建缓存、SQLite 数据库，以及根目录的 `data/`、`output/`、`outputs/` 均由 [`.gitignore`](.gitignore) 排除，保留在本地。
+`.env`、密钥、浏览器登录态、依赖目录、构建缓存、SQLite 数据库，以及根目录的 `scripts/`、`data/`、`output/`、`outputs/`、本地生产部署文件均由 [`.gitignore`](.gitignore) 排除，保留在本地。公开仓库不提供维护者的服务器 IP、生产域名或机器目录。
 
 ## 参与改进
 
 欢迎通过 [Issues](https://github.com/fanmi12/Campus-Intelligent-Agent/issues) 提交问题或建议，也欢迎提交 Pull Request。界面问题请附复现步骤、浏览器和截图；资料纠错请附原始出处与日期。提交代码前运行与改动相关的规范、类型或协议检查。
+
+发布前还可执行 `python tools/check_public_repo.py --history` 检查可达提交中的私密配置，或用 `--staged` 检查本次暂存内容。检查只报告文件和规则，不输出命中的敏感值。
 
 ## 许可证与第三方内容
 

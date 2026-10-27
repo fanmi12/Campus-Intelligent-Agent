@@ -1,0 +1,28 @@
+[Unit]
+Description=Campus Intelligent Agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=campus-agent
+Group=campus-agent
+WorkingDirectory=/opt/campus-agent/current
+Environment=NODE_ENV=production
+Environment=NEXT_TELEMETRY_DISABLED=1
+Environment=HOSTNAME=127.0.0.1
+Environment=PORT=3100
+Environment=DATA_DIR=/opt/campus-agent/shared/data
+ExecStart=/usr/bin/node --env-file=/opt/campus-agent/shared/.env server.js
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/campus-agent/shared/data
+
+[Install]
+WantedBy=multi-user.target
