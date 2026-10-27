@@ -1,0 +1,53 @@
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local configuration, credentials, and browser authentication state
+.env*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+.auth/
+browser_data/
+.claude/
+.playwright-cli/
+
+# Dependencies and generated build caches
+node_modules/
+.venv/
+venv/
+.next*/
+*.tsbuildinfo
+.pytest_cache/
+.ruff_cache/
+
+# Raw captures, local databases, reports, previews, and transfer archives.
+# Keep the curated knowledge base and application assets under web/ in Git.
+/data/
+/output/
+/outputs/
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.log
+
+# Crawler runtime and local authentication state
+__pycache__/
+*.pyc
+data/social/**/logs/
+outputs/**/.authoring/node_modules/
+outputs/**/.previews/
+
+# Deployment transfer artifacts may contain the application database.
+outputs/deployment/*.db
+outputs/deployment/*.tar.gz
+
+# Local operational files must never be published.
+/scripts/
+/web/deploy/*
+!/web/deploy/examples/
+.privacy-local.json

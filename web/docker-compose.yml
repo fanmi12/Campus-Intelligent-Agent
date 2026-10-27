@@ -1,0 +1,36 @@
+# 服务器上一条命令启动：docker compose up -d --build
+# 需要先准备好 .env（从 .env.example 复制），并在 .env 里写上 DOMAIN=你的域名
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      # 数据库（提问记录、反馈、知识库索引）
+      - app_data:/app/data
+      # 知识库资料：直接改服务器上的 knowledge 文件夹，重启或在后台点「重新导入」即可生效
+      - ./knowledge:/app/knowledge:ro
+    expose:
+      - "3000"
+
+  # Caddy 负责 HTTPS：自动申请和续期证书。香港服务器不需要备案
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:?请在 .env 里设置 DOMAIN，例如 DOMAIN=agent.example.com}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  app_data:
+  caddy_data:
+  caddy_config:

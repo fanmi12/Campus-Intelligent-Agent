@@ -1,0 +1,533 @@
+/* 仅扫描应用源码，避免把并行开发缓存中的二进制片段识别为样式类。 */
+@import "tailwindcss" source("../");
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei UI", "Microsoft YaHei",
+    "Noto Sans SC", "Source Han Sans SC", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-heading: "PingFang SC", "HarmonyOS Sans SC", "MiSans", "Microsoft YaHei UI", "Microsoft YaHei",
+    "Noto Sans SC", "Source Han Sans SC", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-gold: var(--gold);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* 品牌色取自醒狮的朱红，配暖灰色调。换主题色只改 --primary 即可 */
+:root {
+  --background: oklch(0.985 0.004 70);
+  --foreground: oklch(0.22 0.012 45);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.012 45);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.22 0.012 45);
+  --primary: oklch(0.585 0.2 32);
+  --primary-foreground: oklch(0.99 0.004 70);
+  --secondary: oklch(0.955 0.008 60);
+  --secondary-foreground: oklch(0.3 0.02 40);
+  --muted: oklch(0.955 0.007 60);
+  --muted-foreground: oklch(0.52 0.016 50);
+  --accent: oklch(0.95 0.025 45);
+  --accent-foreground: oklch(0.4 0.12 35);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.915 0.009 60);
+  --input: oklch(0.915 0.009 60);
+  --ring: oklch(0.585 0.2 32);
+  --gold: oklch(0.78 0.14 75);
+  --success: oklch(0.62 0.15 155);
+  --warning: oklch(0.7 0.15 65);
+  --chart-1: oklch(0.585 0.2 32);
+  --chart-2: oklch(0.7 0.13 70);
+  --chart-3: oklch(0.6 0.1 200);
+  --chart-4: oklch(0.55 0.12 280);
+  --chart-5: oklch(0.65 0.12 150);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.975 0.005 60);
+  --sidebar-foreground: oklch(0.22 0.012 45);
+  --sidebar-primary: oklch(0.585 0.2 32);
+  --sidebar-primary-foreground: oklch(0.99 0.004 70);
+  --sidebar-accent: oklch(0.95 0.025 45);
+  --sidebar-accent-foreground: oklch(0.4 0.12 35);
+  --sidebar-border: oklch(0.915 0.009 60);
+  --sidebar-ring: oklch(0.585 0.2 32);
+}
+
+.dark {
+  --background: oklch(0.175 0.008 45);
+  --foreground: oklch(0.955 0.006 70);
+  --card: oklch(0.215 0.009 45);
+  --card-foreground: oklch(0.955 0.006 70);
+  --popover: oklch(0.235 0.01 45);
+  --popover-foreground: oklch(0.955 0.006 70);
+  --primary: oklch(0.67 0.18 35);
+  --primary-foreground: oklch(0.17 0.02 35);
+  --secondary: oklch(0.27 0.01 45);
+  --secondary-foreground: oklch(0.955 0.006 70);
+  --muted: oklch(0.255 0.01 45);
+  --muted-foreground: oklch(0.71 0.015 60);
+  --accent: oklch(0.3 0.04 40);
+  --accent-foreground: oklch(0.88 0.06 45);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 14%);
+  --ring: oklch(0.67 0.18 35);
+  --gold: oklch(0.8 0.13 80);
+  --success: oklch(0.7 0.14 155);
+  --warning: oklch(0.76 0.14 70);
+  --chart-1: oklch(0.67 0.18 35);
+  --chart-2: oklch(0.76 0.12 75);
+  --chart-3: oklch(0.68 0.1 200);
+  --chart-4: oklch(0.65 0.12 280);
+  --chart-5: oklch(0.7 0.12 150);
+  --sidebar: oklch(0.2 0.009 45);
+  --sidebar-foreground: oklch(0.955 0.006 70);
+  --sidebar-primary: oklch(0.67 0.18 35);
+  --sidebar-primary-foreground: oklch(0.17 0.02 35);
+  --sidebar-accent: oklch(0.3 0.04 40);
+  --sidebar-accent-foreground: oklch(0.88 0.06 45);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.67 0.18 35);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@utility pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* 页面背景：顶部一层很淡的彩色光晕，和下面的炫光同色系 */
+@utility bg-aurora {
+  background-image:
+    radial-gradient(42rem 22rem at 0% -6rem, color-mix(in oklch, var(--glow-blue) 10%, transparent), transparent 70%),
+    radial-gradient(42rem 22rem at 100% -6rem, color-mix(in oklch, var(--glow-pink) 9%, transparent), transparent 70%),
+    radial-gradient(50rem 24rem at 50% -14rem, color-mix(in oklch, var(--glow-gold) 10%, transparent), transparent 70%);
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@utility text-shimmer {
+  background: linear-gradient(90deg, var(--muted-foreground) 30%, var(--foreground) 50%, var(--muted-foreground) 70%);
+  background-size: 200% 100%;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 2.2s linear infinite;
+}
+
+/* 入场动画：纯 CSS，由合成器驱动，回答流式输出时主线程再忙也不掉帧 */
+@keyframes enter-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+  70% {
+    transform: scale(1.04);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@utility animate-enter {
+  animation: enter-up 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@utility animate-pop {
+  animation: pop-in 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@utility animate-fade {
+  animation: fade-in 0.3s ease-out both;
+}
+
+/* ================================================================
+   炫光：参考 Gemini 的动态光效。
+   渐变 = Gemini 的蓝、紫、粉 + 醒狮的橙、金，改颜色只需改下面 5 个变量
+   ================================================================ */
+@property --glow-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+:root {
+  --glow-blue: #4c8dff;
+  --glow-violet: #9a6bff;
+  --glow-pink: #ff5c9a;
+  --glow-orange: #ff7a3d;
+  --glow-gold: #ffc24d;
+  /* 浅色背景上光要柔和一点，深色背景上可以更亮 */
+  --glow-strength: 0.5;
+}
+
+.dark {
+  --glow-strength: 0.85;
+}
+
+@keyframes glow-spin {
+  to {
+    --glow-angle: 360deg;
+  }
+}
+
+@keyframes glow-flow {
+  to {
+    background-position: 200% center;
+  }
+}
+
+@keyframes aurora-drift-1 {
+  0%,
+  100% {
+    transform: translate3d(-10%, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(14%, -10%, 0) scale(1.15);
+  }
+}
+
+@keyframes aurora-drift-2 {
+  0%,
+  100% {
+    transform: translate3d(12%, 6%, 0) scale(1.1);
+  }
+  50% {
+    transform: translate3d(-14%, -8%, 0) scale(0.95);
+  }
+}
+
+@keyframes aurora-drift-3 {
+  0%,
+  100% {
+    transform: translate3d(0, 8%, 0) scale(0.92);
+  }
+  50% {
+    transform: translate3d(-10%, -12%, 0) scale(1.2);
+  }
+}
+
+/* 四角星是四重对称的，转 90° 正好回到原样，可以无缝循环 */
+@keyframes spark-turn {
+  0% {
+    transform: rotate(0deg) scale(0.86);
+  }
+  50% {
+    transform: rotate(45deg) scale(1.08);
+  }
+  100% {
+    transform: rotate(90deg) scale(0.86);
+  }
+}
+
+/* 输入框外的流光边框：聚焦时出现，AI 回答时（data-active）转得更快、更亮 */
+@utility glow-frame {
+  position: relative;
+  isolation: isolate;
+  padding: 1.5px;
+  background: var(--border);
+
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    border-radius: inherit;
+    background: conic-gradient(
+      from var(--glow-angle),
+      var(--glow-blue),
+      var(--glow-violet),
+      var(--glow-pink),
+      var(--glow-orange),
+      var(--glow-gold),
+      var(--glow-blue)
+    );
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    animation: glow-spin 6s linear infinite;
+  }
+  &::before {
+    inset: 0;
+    z-index: -1;
+  }
+  &::after {
+    inset: -4px;
+    z-index: -2;
+    filter: blur(18px);
+  }
+  &:focus-within::before {
+    opacity: 0.9;
+  }
+  &:focus-within::after {
+    opacity: calc(var(--glow-strength) * 0.5);
+  }
+  &[data-active="true"]::before {
+    opacity: 1;
+    animation-duration: 2.4s;
+  }
+  &[data-active="true"]::after {
+    opacity: var(--glow-strength);
+    animation-duration: 2.4s;
+  }
+}
+
+/* 卡片悬停时浮现的渐变描边 */
+@utility glow-card {
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    padding: 1px;
+    border-radius: inherit;
+    background: conic-gradient(
+      from var(--glow-angle),
+      var(--glow-blue),
+      var(--glow-violet),
+      var(--glow-pink),
+      var(--glow-orange),
+      var(--glow-gold),
+      var(--glow-blue)
+    );
+    -webkit-mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+    -webkit-mask-clip: content-box, border-box;
+    -webkit-mask-composite: xor;
+    mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+    mask-clip: content-box, border-box;
+    mask-composite: exclude;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    animation: glow-spin 4s linear infinite;
+  }
+  &:hover::before,
+  &:focus-visible::before {
+    opacity: 1;
+  }
+}
+
+/* 流动的渐变文字（问候语） */
+@utility text-glow {
+  background-image: linear-gradient(
+    90deg,
+    var(--glow-blue),
+    var(--glow-violet),
+    var(--glow-pink),
+    var(--glow-orange),
+    var(--glow-gold),
+    var(--glow-pink),
+    var(--glow-violet),
+    var(--glow-blue)
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: glow-flow 8s linear infinite;
+}
+
+@layer components {
+  /* 底部氛围光：三团模糊的彩色光缓慢漂移，AI 回答时变亮 */
+  .aurora {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 18rem;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0.45;
+    transition: opacity 0.9s ease;
+  }
+  .aurora[data-active="true"] {
+    opacity: 1;
+  }
+  .aurora > span {
+    position: absolute;
+    bottom: -7rem;
+    width: 72%;
+    height: 13rem;
+    border-radius: 9999px;
+    filter: blur(52px);
+    opacity: var(--glow-strength);
+    will-change: transform;
+  }
+  .aurora > span:nth-child(1) {
+    left: -14%;
+    background: var(--glow-blue);
+    animation: aurora-drift-1 10s ease-in-out infinite;
+  }
+  .aurora > span:nth-child(2) {
+    left: 16%;
+    background: var(--glow-pink);
+    animation: aurora-drift-2 12s ease-in-out infinite;
+  }
+  .aurora > span:nth-child(3) {
+    right: -14%;
+    background: var(--glow-gold);
+    animation: aurora-drift-3 14s ease-in-out infinite;
+  }
+
+  /* 头像外圈旋转光环（思考、回答中） */
+  .avatar-glow {
+    position: absolute;
+    inset: -3px;
+    border-radius: 9999px;
+    background: conic-gradient(
+      from var(--glow-angle),
+      var(--glow-blue),
+      var(--glow-violet),
+      var(--glow-pink),
+      var(--glow-orange),
+      var(--glow-gold),
+      var(--glow-blue)
+    );
+    filter: blur(2.5px);
+    animation: glow-spin 1.6s linear infinite;
+  }
+
+  /* 首页大头像背后的彩色光晕 */
+  .hero-halo {
+    position: absolute;
+    inset: -45%;
+    border-radius: 9999px;
+    background: conic-gradient(
+      from var(--glow-angle),
+      var(--glow-blue),
+      var(--glow-violet),
+      var(--glow-pink),
+      var(--glow-orange),
+      var(--glow-gold),
+      var(--glow-blue)
+    );
+    filter: blur(30px);
+    opacity: calc(var(--glow-strength) * 1.5);
+    animation: glow-spin 9s linear infinite;
+  }
+
+  /* 思考时的四角星 */
+  .spark {
+    transform-origin: center;
+    animation: spark-turn 2.4s ease-in-out infinite;
+    filter: drop-shadow(0 0 6px color-mix(in oklch, var(--glow-violet) 55%, transparent));
+  }
+
+  /* 顶栏底部的流光细线：AI 回答时出现 */
+  .glow-line {
+    position: absolute;
+    inset-inline: 0;
+    bottom: -1px;
+    height: 2px;
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      var(--glow-blue),
+      var(--glow-violet),
+      var(--glow-pink),
+      var(--glow-orange),
+      var(--glow-gold),
+      transparent
+    );
+    background-size: 200% auto;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    animation: glow-flow 1.8s linear infinite;
+    pointer-events: none;
+  }
+  .glow-line[data-active="true"] {
+    opacity: 1;
+  }
+}
+
+/* 系统开启"减少动态效果"时，保留光效但停止动画 */
+@media (prefers-reduced-motion: reduce) {
+  .glow-frame::before,
+  .glow-frame::after,
+  .glow-card::before,
+  .text-glow,
+  .aurora > span,
+  .avatar-glow,
+  .hero-halo,
+  .spark,
+  .glow-line,
+  .animate-enter,
+  .animate-pop,
+  .animate-fade {
+    animation: none !important;
+  }
+}

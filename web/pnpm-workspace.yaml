@@ -1,0 +1,8 @@
+# 只安装发布满 7 天的版本，降低 npm 供应链投毒风险
+minimumReleaseAge: 10080
+
+# 只允许这些依赖执行安装脚本
+allowBuilds:
+  esbuild: true
+  sharp: false
+  unrs-resolver: false

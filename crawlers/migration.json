@@ -1,0 +1,10 @@
+{
+  "source_repository": "https://github.com/NanmiCoder/MediaCrawler.git",
+  "source_commit": "8f583999006d5b692272c608440e193ca282e73b",
+  "copied_files": 355,
+  "local_modified_files": [
+    "config/base_config.py"
+  ],
+  "migration_date": "2026-10-26",
+  "xhs_archive_sha256": "6cb7e468fe3962ae428bda291ed7245fd5dec110c2db18702e42ee3b0f28d7fc"
+}

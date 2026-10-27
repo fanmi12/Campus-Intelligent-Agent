@@ -1,0 +1,25 @@
+.card { overflow: hidden; border: 1px solid var(--border); border-radius: 16px; background: var(--card); }
+.map { position: relative; height: 230px; overflow: hidden; color: var(--muted-foreground); background: var(--muted); transition: height 240ms cubic-bezier(0.22, 1, 0.36, 1); }
+.expanded { height: 360px; }
+.mapCanvas { position: absolute; inset: 0; }
+.mapStatus { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 30px; background: var(--muted); font-size: 13px; line-height: 1.7; text-align: center; }
+.retry { display: inline-flex; min-height: 36px; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--foreground); }
+.zoomControls { position: absolute; right: 10px; bottom: 30px; display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--card); color: var(--foreground); }
+.zoomControls button { display: grid; width: 36px; height: 36px; place-items: center; }
+.zoomControls button + button { border-top: 1px solid var(--border); }
+.candidates { padding: 14px 16px 0; }
+.candidate { display: flex; width: 100%; align-items: flex-start; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--border); color: var(--foreground); text-align: left; }
+.candidate:hover, .chosen { color: var(--primary); }
+.candidate:focus-visible, .retry:focus-visible, .zoomControls button:focus-visible { outline: 2px solid var(--ring); outline-offset: -2px; }
+.expandButton { position: absolute; top: 10px; right: 10px; display: grid; width: 32px; height: 32px; place-items: center; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--foreground); }
+.origin { display: flex; gap: 10px; padding-block: 12px; border-block: 1px solid var(--border); }
+.navigate, .copy { display: inline-flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 500; transition: background-color 150ms ease; }
+.navigate { flex: 1 1 120px; background: var(--primary); color: var(--primary-foreground); }
+.navigate:hover { background: color-mix(in oklch, var(--primary), var(--foreground) 12%); }
+.copy { flex: 0 1 auto; border: 1px solid var(--border); color: var(--foreground); }
+.copy:hover, .expandButton:hover { background: var(--muted); }
+.helpButton { display: inline-flex; min-height: 28px; align-items: center; gap: 5px; font-size: 11px; color: var(--muted-foreground); }
+.helpButton:hover { color: var(--foreground); }
+.navigate:focus-visible, .copy:focus-visible, .expandButton:focus-visible, .helpButton:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+.card::selection, .card ::selection { background: var(--accent); color: var(--accent-foreground); }
+@media (prefers-reduced-motion: reduce) { .map, .navigate, .copy { transition: none; } }
