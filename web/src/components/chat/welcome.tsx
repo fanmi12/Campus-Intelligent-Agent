@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, CalendarPlus, CheckSquare, Contact, MapPin, Utensils, type LucideIcon } from "lucide-react";
+import { BookOpen, CalendarPlus, CheckSquare, Contact, MapPin, ShieldCheck, Utensils, type LucideIcon } from "lucide-react";
 import { site, type SuggestionIcon } from "@/lib/config";
 import { BrandAvatar } from "./brand-avatar";
 
@@ -21,7 +21,7 @@ function greeting(hour: number) {
   return "晚上好";
 }
 
-export function Welcome({ onSelect }: { onSelect: (prompt: string) => void }) {
+export function Welcome({ onSelect, onPrivacy }: { onSelect: (prompt: string) => void; onPrivacy: () => void }) {
   return (
     <div className="flex flex-col items-center pt-6 sm:pt-14">
       <div className="animate-pop relative isolate">
@@ -58,6 +58,19 @@ export function Welcome({ onSelect }: { onSelect: (prompt: string) => void }) {
           );
         })}
       </div>
+
+      <p
+        style={{ animationDelay: `${120 + site.suggestions.length * 50}ms` }}
+        className="animate-enter mt-5 flex max-w-sm items-start gap-1.5 text-xs leading-5 text-muted-foreground"
+      >
+        <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
+        <span>
+          提问会匿名记录，用于补充校园资料；请不要输入身份证号、密码等敏感信息。
+          <button type="button" onClick={onPrivacy} className="underline underline-offset-2 transition hover:text-foreground">
+            隐私说明
+          </button>
+        </span>
+      </p>
     </div>
   );
 }

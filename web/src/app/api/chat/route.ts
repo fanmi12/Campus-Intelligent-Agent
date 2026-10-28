@@ -21,10 +21,12 @@ import { hasVision, hasWebSearch, isDemoMode } from "@/lib/server/env";
 import { ensureKnowledgeIndexed } from "@/lib/server/kb/ingest";
 import { searchKnowledge } from "@/lib/server/kb/search";
 import { logChat } from "@/lib/server/logs";
-import { chatQueue } from "@/lib/server/chat-queue";
+import { chatQueue, ChatQueueError, type QueueOwner } from "@/lib/server/chat-queue";
+import { clientIp } from "@/lib/server/rate-limit";
 
 const MAX_HISTORY = 16;
 const MAX_IMAGES = 3;
+const CLIENT_ID = /^[\w-]{8,64}$/;
 const SMALL_TALK = /^\s*(你好|您好|hi|hello|嗨|在吗|谢谢|多谢|好的|ok|嗯+|哈+)[\s!！。.~～？?]*$/i;
 
 function textOf(message: AppUIMessage): string {
@@ -131,6 +133,15 @@ export async function POST(req: Request) {
     return Response.json({ error: "消息不能为空" }, { status: 400 });
   }
 
+  // 排队按浏览器计数，同一个 Wi-Fi 出口的同学互不影响；没带标识的旧页面按对话计
+  const headerId = req.headers.get("x-client-id");
+  const owner: QueueOwner = {
+    client: headerId && CLIENT_ID.test(headerId) ? headerId : chatId ?? clientIp(req),
+    ip: clientIp(req),
+  };
+  const refused = chatQueue.check(owner);
+  if (refused) return Response.json({ error: refused }, { status: 429 });
+
   await ensureKnowledgeIndexed().catch((error) => console.error("[kb] 自动导入失败", error));
 
   let sources: SourceItem[] = [];
@@ -148,7 +159,7 @@ export async function POST(req: Request) {
 
       const release = await chatQueue.acquire(signal, (data) => {
         writer.write({ type: "data-queue", id: "queue", data });
-      });
+      }, owner);
       const heartbeat = setInterval(() => {
         writer.write({ type: "data-queue", id: "queue-heartbeat", data: { status: "running", position: 0, waiting: 0, active: 0 }, transient: true });
       }, 15_000);
@@ -244,7 +255,7 @@ export async function POST(req: Request) {
     },
     onError: (error) => {
       console.error("[chat]", error);
-      return error instanceof Error && /排队/.test(error.message) ? error.message : "抱歉，服务暂时出了点问题，请稍后再试。";
+      return error instanceof ChatQueueError ? error.message : "抱歉，服务暂时出了点问题，请稍后再试。";
     },
     onEnd: ({ responseMessage }) => {
       console.log(

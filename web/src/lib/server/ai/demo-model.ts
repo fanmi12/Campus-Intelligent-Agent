@@ -36,6 +36,7 @@ const pad = (value: number) => String(value).padStart(2, "0");
 function extractEvent(text: string, now: Date) {
   const today = beijingNow(now);
   const dateMatch = text.match(/(\d{1,2})\s*月\s*(\d{1,2})\s*[日号]/);
+  const weekMatch = text.match(/(下|本|这)\s*(?:周|星期|礼拜)\s*([一二三四五六日天])/);
   const timeMatch = text.match(/(上午|早上|中午|下午|晚上)?\s*(\d{1,2})\s*(?:[点时:：])\s*(半|\d{1,2})?/);
 
   let year = today.year;
@@ -46,6 +47,11 @@ function extractEvent(text: string, now: Date) {
     day = Number(dateMatch[2]);
     // 日期已经过去两个月以上，多半说的是明年
     if (month < today.month - 2) year += 1;
+  } else if (weekMatch) {
+    // "下周三""本周五"：一周从周一算起，超出本月的天数由 Date.UTC 自动进位
+    const todayIndex = (new Date(Date.UTC(year, month - 1, today.day)).getUTCDay() + 6) % 7;
+    const target = weekMatch[2] === "天" ? 6 : "一二三四五六日".indexOf(weekMatch[2]);
+    day = today.day + target - todayIndex + (weekMatch[1] === "下" ? 7 : 0);
   }
   const date = new Date(Date.UTC(year, month - 1, day));
   const isoDate = `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;

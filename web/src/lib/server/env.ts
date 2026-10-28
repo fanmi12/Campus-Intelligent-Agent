@@ -79,10 +79,13 @@ export const env = {
   knowledgeDir: path.resolve(/* turbopackIgnore: true */ read("KNOWLEDGE_DIR") ?? "knowledge"),
   // 语义相似度低于这个值、关键词也对不上时，判定为"资料里没有"
   kbMinSimilarity: readNumber("KB_MIN_SIMILARITY", 0.45),
-  // 全站滚动一分钟最多启动的提问数
-  chatRateLimit: Math.floor(readNumber("CHAT_RATE_LIMIT", 20)),
-  chatConcurrency: Math.floor(readNumber("CHAT_CONCURRENCY", 5)),
-  chatQueueCapacity: Math.floor(readNumber("CHAT_QUEUE_CAPACITY", 40)),
+  // 全站滚动一分钟最多开始处理的提问数（保护模型额度），同时处理数，等待队列上限
+  chatRateLimit: Math.floor(readNumber("CHAT_RATE_LIMIT", 60)),
+  chatConcurrency: Math.floor(readNumber("CHAT_CONCURRENCY", 8)),
+  chatQueueCapacity: Math.floor(readNumber("CHAT_QUEUE_CAPACITY", 100)),
+  // 每个浏览器滚动一分钟最多提问次数；同一公网出口（校园网、现场 Wi-Fi）同时排队和处理中的上限
+  chatClientRateLimit: Math.floor(readNumber("CHAT_CLIENT_RATE_LIMIT", 6)),
+  chatIpActiveLimit: Math.floor(readNumber("CHAT_IP_ACTIVE_LIMIT", 40)),
 };
 
 // 没配置大模型时进入演示模式：不调用任何外部接口，用模拟回复跑通界面

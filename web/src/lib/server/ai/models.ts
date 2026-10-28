@@ -62,11 +62,18 @@ function queryText(query: string): string {
     : query;
 }
 
+// 同一上游正在等待返回的请求数。多人同时提问时上游本来就在排队，再补发对冲请求只会更慢，
+// 所以超过 hedgeBelow 个就不再补发
+type Lane = { inflight: number; hedgeBelow: number };
+const embeddingLane: Lane = { inflight: 0, hedgeBelow: 6 };
+const rerankLane: Lane = { inflight: 0, hedgeBelow: 12 };
+
 // 对冲请求：第一个请求 delayMs 毫秒没返回就再发一个相同的，谁先返回用谁，最多 attempts 个；
 // 总共限时 timeoutMs，到时间就放弃（不依赖底层请求是否响应取消）。有返回后取消其余请求
 async function hedged<T>(
   run: (signal: AbortSignal) => Promise<T>,
   { delayMs, attempts, timeoutMs }: { delayMs: number; attempts: number; timeoutMs: number },
+  lane: Lane,
 ): Promise<T> {
   const done = new AbortController();
   const timeout = AbortSignal.timeout(timeoutMs);
@@ -75,8 +82,16 @@ async function hedged<T>(
     timeout.addEventListener("abort", () => reject(new Error(`超过 ${timeoutMs / 1000} 秒没有返回`)), { once: true });
   });
   const attempt = async (index: number) => {
-    if (index) await sleep(index * delayMs, undefined, { signal });
-    return run(signal);
+    if (index) {
+      await sleep(index * delayMs, undefined, { signal });
+      if (lane.inflight >= lane.hedgeBelow) throw new Error("上游繁忙，不再补发");
+    }
+    lane.inflight++;
+    try {
+      return await run(signal);
+    } finally {
+      lane.inflight--;
+    }
   };
   try {
     return await Promise.race([Promise.any(Array.from({ length: attempts }, (_, index) => attempt(index))), timedOut]);
@@ -102,6 +117,7 @@ export async function embedQuery(model: EmbeddingModel, query: string): Promise<
       return embeddings[0];
     },
     { delayMs: 500, attempts: 4, timeoutMs: 4000 },
+    embeddingLane,
   );
   if (queryCache.size >= 500) queryCache.delete(queryCache.keys().next().value as string);
   queryCache.set(key, vector);
@@ -133,7 +149,7 @@ export async function rerank(query: string, documents: string[]): Promise<Rerank
   const starts = Array.from({ length: Math.ceil(documents.length / RERANK_BATCH) }, (_, i) => i * RERANK_BATCH);
   const batches = await Promise.all(
     starts.map((start) =>
-      hedged((signal) => rerankBatch(start, signal), { delayMs: 1000, attempts: 2, timeoutMs: 6000 }),
+      hedged((signal) => rerankBatch(start, signal), { delayMs: 1000, attempts: 2, timeoutMs: 6000 }, rerankLane),
     ),
   );
   return batches.flat();

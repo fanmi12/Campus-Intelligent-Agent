@@ -1,6 +1,6 @@
 "use client";
 
-import { Ellipsis, LayoutDashboard, Monitor, Moon, SquarePen, Sun } from "lucide-react";
+import { Ellipsis, History, LayoutDashboard, Monitor, Moon, ShieldCheck, SquarePen, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,10 +17,14 @@ import { BrandAvatar } from "./brand-avatar";
 
 export function ChatHeader({
   onNewChat,
+  onOpenHistory,
+  onOpenPrivacy,
   canReset,
   busy = false,
 }: {
   onNewChat?: () => void;
+  onOpenHistory?: () => void;
+  onOpenPrivacy?: () => void;
   canReset?: boolean;
   busy?: boolean;
 }) {
@@ -36,6 +40,10 @@ export function ChatHeader({
             {site.school} · {site.tagline}
           </div>
         </div>
+        {/* 回答中不能切换对话，否则这次回答来不及保存 */}
+        <Button variant="ghost" size="icon" onClick={onOpenHistory} disabled={!onOpenHistory || busy} aria-label="历史对话">
+          <History />
+        </Button>
         <Button variant="ghost" size="icon" onClick={onNewChat} disabled={!canReset} aria-label="开始新对话">
           <SquarePen />
         </Button>
@@ -60,6 +68,12 @@ export function ChatHeader({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
+            {onOpenPrivacy && (
+              <DropdownMenuItem onClick={onOpenPrivacy}>
+                <ShieldCheck />
+                隐私说明
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem render={<a href="/admin" />}>
               <LayoutDashboard />
               管理后台
