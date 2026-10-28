@@ -1,7 +1,6 @@
 "use client";
 
-import { placeSearchText, type CampusPlace, type MapPoi } from "./campus-map";
-import { site } from "./config";
+import { isCampusPoi, normalizePlaceName, placeSearchNames, placeSearchText, type CampusPlace, type MapPoi } from "./campus-map";
 
 type Position = { getLng(): number; getLat(): number };
 type RawPoi = { id?: string; name?: string; address?: string; cityname?: string; adname?: string; location?: Position };
@@ -72,33 +71,54 @@ export function searchCampusPlace(sdk: AMapSdk, place: CampusPlace): Promise<Map
   const keyword = placeSearchText(place);
   const cached = searches.get(keyword);
   if (cached) return cached;
+  const names = placeSearchNames(place);
+  const matchNames = names.map(normalizePlaceName);
+  const structuredBuilding = matchNames.some((name) => /^(?:学[1-9]\d{0,2}宿舍|[1-9]\d{0,2}[A-Z])$/.test(name));
   const result = new Promise<MapPoi[]>((resolve, reject) => {
-    const timer = window.setTimeout(() => reject(new Error("地点搜索超时，请重试")), 15000);
-    const search = new sdk.PlaceSearch({ city: "东莞", citylimit: true, pageSize: 5, extensions: "base" });
-    search.search(keyword, (status, result) => {
-      window.clearTimeout(timer);
-      if (status === "no_data") return resolve([]);
-      if (status !== "complete") return reject(new Error("高德地点搜索暂不可用，请稍后重试"));
-      const pois = (result.poiList?.pois ?? []).flatMap((poi): MapPoi[] => {
-        const longitude = poi.location?.getLng();
-        const latitude = poi.location?.getLat();
-        if (!poi.name || !Number.isFinite(longitude) || !Number.isFinite(latitude) ||
-            longitude! < 73 || longitude! > 136 || latitude! < 3 || latitude! > 54) return [];
-        return [{
-          id: poi.id ?? poi.name, name: poi.name, longitude: longitude!, latitude: latitude!,
-          address: [poi.cityname, poi.adname, typeof poi.address === "string" ? poi.address : ""].filter(Boolean).join(""),
-        }];
+    let settled = false;
+    const timer = window.setTimeout(() => {
+      settled = true;
+      reject(new Error("地点搜索超时，请重试"));
+    }, 15000);
+    const search = new sdk.PlaceSearch({ city: "东莞", citylimit: true, pageSize: 25, extensions: "base" });
+    const finish = (pois: MapPoi[]) => { settled = true; window.clearTimeout(timer); resolve(pois); };
+    function query(index: number) {
+      const text = placeSearchText({ ...place, name: names[index] });
+      search.search(text, (status, result) => {
+        if (settled) return;
+        if (status !== "complete" && status !== "no_data") {
+          settled = true;
+          window.clearTimeout(timer);
+          return reject(new Error("高德地点搜索暂不可用，请稍后重试"));
+        }
+        const pois = (result?.poiList?.pois ?? []).flatMap((poi): MapPoi[] => {
+          const longitude = poi.location?.getLng();
+          const latitude = poi.location?.getLat();
+          if (!poi.name || !Number.isFinite(longitude) || !Number.isFinite(latitude) ||
+              longitude! < 73 || longitude! > 136 || latitude! < 3 || latitude! > 54) return [];
+          return [{
+            id: poi.id ?? poi.name, name: poi.name, longitude: longitude!, latitude: latitude!,
+            address: [poi.cityname, poi.adname, typeof poi.address === "string" ? poi.address : ""].filter(Boolean).join(""),
+          }];
+        });
+        const relevant = pois.filter((poi) => isCampusPoi(poi) &&
+          (structuredBuilding ? matchNames.includes(normalizePlaceName(poi.name)) :
+            matchNames.some((name) => normalizePlaceName(poi.name).includes(name))));
+        const exact = relevant.filter((poi) => matchNames.includes(normalizePlaceName(poi.name)));
+        if (exact.length) return finish(exact);
+        if (relevant.length) return finish(relevant);
+        if (index + 1 < names.length) query(index + 1);
+        else finish([]);
       });
-      const relevant = pois.filter((poi) =>
-        poi.name.includes(place.name) && (poi.name + poi.address).includes(site.school));
-      const exact = relevant.filter((poi) => poi.name.replace(/[\s（）()]/g, "") === keyword.replace(/[\s（）()]/g, ""));
-      resolve(exact.length === 1 ? exact : relevant);
-    });
+    }
+    query(0);
   }).catch((error) => {
     searches.delete(keyword);
     throw error;
   });
   if (searches.size >= 50) searches.clear();
+  // 空结果允许重新查询，避免一次未命中一直留在当前页面缓存里。
+  void result.then((pois) => { if (!pois.length) searches.delete(keyword); }, () => {});
   searches.set(keyword, result);
   return result;
 }

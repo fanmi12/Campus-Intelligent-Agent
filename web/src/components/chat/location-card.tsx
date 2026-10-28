@@ -4,7 +4,7 @@ import { ArrowUpRight, BookOpen, Check, ChevronDown, Copy, LocateFixed, MapPin, 
 import { useId, useState } from "react";
 import { toast } from "sonner";
 import type { AppUIMessage } from "@/lib/ai/types";
-import { amapNavigationUrl, amapSearchUrl, placeSearchText, type CampusPlace, type MapPoi } from "@/lib/campus-map";
+import { amapNavigationUrl, amapSearchUrl, normalizeCampusPlace, placeSearchText, type CampusPlace, type MapPoi } from "@/lib/campus-map";
 import { cn } from "@/lib/utils";
 import styles from "./location-card.module.css";
 import { CampusMapView } from "./campus-map-view";
@@ -16,7 +16,8 @@ const KIND = {
   other: { label: "校园地点", icon: MapPin },
 };
 
-export function PlaceCard({ place }: { place: CampusPlace }) {
+export function PlaceCard({ place: sourcePlace }: { place: CampusPlace }) {
+  const place = normalizeCampusPlace(sourcePlace);
   const [resolved, setResolved] = useState<MapPoi>();
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -44,7 +45,7 @@ export function PlaceCard({ place }: { place: CampusPlace }) {
         <div>
           <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
             <h4 className="min-w-0 text-[17px] leading-6 font-semibold break-words">{place.name}</h4>
-            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground"><Icon className="size-3" />{label}</span>
+            <span className="inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground"><Icon className="size-3" />{place.kind === "building" && place.name.includes("宿舍") ? "宿舍楼" : label}</span>
           </div>
           {(resolved?.address || place.address) && <p className="mt-2 flex items-start gap-1.5 text-[13px] leading-5 text-muted-foreground"><MapPin className="mt-0.5 size-3.5 shrink-0" /><span>{resolved?.address || place.address}</span></p>}
           {resolved && <p className="mt-1.5 text-xs text-muted-foreground">高德地点：{resolved.name}</p>}

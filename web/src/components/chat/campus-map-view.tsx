@@ -4,6 +4,7 @@ import { LoaderCircle, MapPin, Minus, Plus, RotateCw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { loadAMap, searchCampusPlace, type CampusMapInstance } from "@/lib/amap-client";
 import type { CampusPlace, MapPoi } from "@/lib/campus-map";
+import { site } from "@/lib/config";
 import { cn } from "@/lib/utils";
 import styles from "./location-card.module.css";
 
@@ -27,15 +28,17 @@ export function CampusMapView({ place, expanded, onResolve }: {
       try {
         const sdk = await loadAMap();
         const matches = await searchCampusPlace(sdk, { name: place.name, kind: place.kind });
+        if (cancelled) return;
+        // 精确点位没匹配到时仍显示真实校园底图，不能把校中心当成目的地。
+        const first = matches[0] ?? (await searchCampusPlace(sdk, { name: site.school, kind: "campus" }))[0];
         if (cancelled || !container.current) return;
         setPois(matches);
-        if (!matches.length) {
-          setState({ phase: "empty", message: "高德暂未找到这个地点，可打开高德继续搜索" });
+        if (!first) {
+          setState({ phase: "empty", message: `暂未匹配到「${place.name}」的可导航地点，可打开高德确认名称或在地图上选点` });
           return;
         }
-        const first = matches[0];
         map = new sdk.Map(container.current, {
-          center: [first.longitude, first.latitude], zoom: 16, viewMode: "2D",
+          center: [first.longitude, first.latitude], zoom: matches.length ? 16 : 15, viewMode: "2D",
           resizeEnable: true, scrollWheel: false, keyboardEnable: true,
           // 始终用地点搜索坐标初始化，避免 SDK 根据访问者 IP 自动选择中心点。
         });
@@ -94,6 +97,9 @@ export function CampusMapView({ place, expanded, onResolve }: {
           <button type="button" onClick={() => mapRef.current?.zoomOut()} aria-label="缩小地图"><Minus className="size-4" /></button>
         </div>}
       </div>
+      {!pois.length && state.phase === "ready" && <p className="px-4 pt-3 text-xs leading-6 text-muted-foreground" role="status">
+        当前显示{site.school}校园范围，「{place.name}」尚未精确定位。可放大查看楼名，或打开高德确认目的地。
+      </p>}
       {pois.length > 1 && state.phase === "ready" && <div className={styles.candidates}>
         <p className="text-xs text-muted-foreground">找到多个地点，请确认目的地</p>
         {pois.map((poi) => <button key={poi.id} type="button" aria-pressed={selected === poi.id} onClick={() => choose.current(poi)} className={cn(styles.candidate, selected === poi.id && styles.chosen)}>

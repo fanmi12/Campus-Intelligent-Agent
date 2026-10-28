@@ -1,6 +1,6 @@
 import { tool, type ToolSet } from "ai";
 import { z } from "zod";
-import type { CampusPlace } from "../campus-map";
+import { normalizeCampusPlace, type CampusPlace } from "../campus-map";
 import { basisSchema, checklistInputSchema, checklistOutputSchema, contactInputSchema, contactOutputSchema, examOutputSchema, referenceSchema, studyInputSchema } from "./result-schemas";
 
 // 这个文件前后端共用：后端执行工具，前端只引用类型来渲染卡片
@@ -135,7 +135,7 @@ export const tools = {
         kind: z.enum(["campus", "library", "dining", "building", "other"]).default("other"),
       })).min(1).max(3),
     }),
-    execute: async ({ places }): Promise<{ places: CampusPlace[] }> => ({ places }),
+    execute: async ({ places }): Promise<{ places: CampusPlace[] }> => ({ places: places.map(normalizeCampusPlace) }),
   }),
   addToCalendar: tool({
     description:
