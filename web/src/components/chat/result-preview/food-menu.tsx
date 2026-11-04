@@ -4,9 +4,11 @@ import Image from "next/image";
 import { ArrowLeft, ArrowRight, ExternalLink, Heart, MapPin, SlidersHorizontal } from "lucide-react";
 import { useId, useState } from "react";
 import type { CampusFood } from "@/lib/campus-food";
+import { availableFoodItems } from "@/lib/food-availability";
 import styles from "./results.module.css";
 
-export function FoodMenu({ items, initialBudget = 20, initialCategory = "全部" }: { items: CampusFood[]; initialBudget?: number; initialCategory?: string }) {
+export function FoodMenu({ items: originalItems, initialBudget = 20, initialCategory = "全部" }: { items: CampusFood[]; initialBudget?: number; initialCategory?: string }) {
+  const items = availableFoodItems(originalItems);
   const [budget, setBudget] = useState(initialBudget);
   const [category, setCategory] = useState(initialCategory);
   const [includeUnknown, setIncludeUnknown] = useState(true);

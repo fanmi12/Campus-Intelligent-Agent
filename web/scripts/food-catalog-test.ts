@@ -2,14 +2,26 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { createHash } from "node:crypto";
 import { campusFoods } from "../src/lib/campus-food";
+import { availableFoodItems, isRemovedCampusFood, removedCampusFoods } from "../src/lib/food-availability";
 import { tools } from "../src/lib/ai/tools";
 import { safeValidateUIMessages } from "ai";
 import type { AppUIMessage } from "../src/lib/ai/types";
 
 async function main() {
   const photos = fs.readFileSync("../outputs/food-knowledge-2026-10-26/photos.jsonl", "utf8").trim().split("\n").map(line => JSON.parse(line));
-  assert.equal(campusFoods.length, 50);
-  assert.equal(new Set(campusFoods.map(f => f.id)).size, 50);
+  assert.equal(campusFoods.length, 48);
+  assert.equal(new Set(campusFoods.map(f => f.id)).size, 48);
+  assert(!campusFoods.some(isRemovedCampusFood));
+  for (const removed of removedCampusFoods) {
+    assert(isRemovedCampusFood(removed));
+    assert(isRemovedCampusFood({ id: "old-id", name: " " + removed.name + " " }));
+    assert(isRemovedCampusFood({ id: "old-id", name: "旧菜单项目", image: removed.image }));
+  }
+  const oldMenu = [...campusFoods, ...removedCampusFoods.map(f => ({ ...campusFoods[0], ...f }))];
+  const sanitized = availableFoodItems([...oldMenu, { ...campusFoods[0], id: "mixed-review", reviewSummary: "程氏香串的历史推荐", reviewSource: "https://example.com" }]);
+  assert.equal(sanitized.length, 49);
+  assert.equal(sanitized.at(-1)?.reviewSummary, null);
+  assert.equal(sanitized.at(-1)?.reviewSource, null);
   for (const food of campusFoods) {
     const match = photos.find(p => p.entity_id === food.id && p.eligible_for_kb && p.public_url === food.image);
     assert.ok(match, `${food.id}: image must be approved for this exact entity`);

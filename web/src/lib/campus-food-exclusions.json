@@ -1,0 +1,16 @@
+[
+  {
+    "id": "food-a006",
+    "name": "大道粥",
+    "image": "/knowledge-food/0741f33142e6cd75db73519c6998fdb78538219aa20cbb8154402bfa1f5679fa.webp",
+    "removedAt": "2026-10-29",
+    "reason": "用户确认已停业，移出推荐"
+  },
+  {
+    "id": "food-a030",
+    "name": "程氏香串",
+    "image": "/knowledge-food/e28e35a817a45c75b7fde71ed56c8ad4ebf733feb25a4a5acab050d9ca569a28.webp",
+    "removedAt": "2026-10-29",
+    "reason": "用户要求下架；推荐图片为投诉文字截图"
+  }
+]

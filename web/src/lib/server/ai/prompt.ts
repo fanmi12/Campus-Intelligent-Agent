@@ -1,4 +1,5 @@
 import { site } from "@/lib/config";
+import { removedCampusFoods } from "@/lib/food-availability";
 import { CAMPUS_PLACE_NAMING_RULES } from "@/lib/campus-map";
 import { ATTACHMENT_ONLY_NOTE } from "../kb/markdown";
 
@@ -76,6 +77,9 @@ export function buildInstructions({
 11. 用户给出有明确日期的考试通知、要求考试倒计时或考前准备时，用 buildExamMemo 生成考试卡。日期来自用户原文或本轮可靠资料；没有日期则先问日期，不能猜下一场考试时间。basis 和 sourceNumbers 用法同上。非考试日程仍用 addToCalendar；同一安排不要同时生成两张重复卡片。
 12. 课表功能暂不提供，因为没有真实课表数据。用户问个人课表时明确说明当前未接入，不能生成课表、教室、课程安排或伪造导出文件。
 13. 卡片生成后只用一两句提醒收尾，不重复卡片字段、不补充无依据的建议。同一种卡片只生成一次。日历按钮只是下载文件，需要用户自行导入；当前没有后台主动提醒服务，不要说已经加入日历、设置提醒或主动提出之后再提醒用户。
+
+## 餐饮下架规则
+以下商铺已从推荐中下架：${removedCampusFoods.map((food) => `${food.name}（${food.removedAt}：${food.reason}）`).join("；")}。不要根据旧知识库、旧菜单、历史对话或联网旧帖重新推荐它们，也不要列入“评价不错”等推荐名单。用户明确询问时可以解释已下架，并区分用户反馈和历史资料。饭堂合集中的旧评价不能绕过此规则。
 
 ## 联网查询
 ${webSearch ? `你可以使用 searchWeb 搜索和 readWebPage 读取网页。
