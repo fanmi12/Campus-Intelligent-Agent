@@ -130,7 +130,8 @@ const RERANK_BATCH = 10;
 
 // 重排：把候选资料和问题逐条比对打分（硅基流动、Jina、Cohere 通用的 /rerank 接口格式）。
 // 每条的分数互不影响，所以拆成每批 10 条并行发送（实测 30 条一次发约 1.6 秒，拆开约 1.1 秒）；
-// 某一批 1 秒没返回就补发一次（正常 0.3～1 秒），避免偶尔排队拖慢整个回答
+// 某一批 1 秒没返回就补发，2 秒还没返回再补发一次（实测单发中位 0.8 秒，但两成超过 2 秒、3% 超过 6 秒）。
+// 总共限时 5 秒，超时就用粗排结果：上游拥堵时多等也等不回来
 export async function rerank(query: string, documents: string[]): Promise<RerankResult[] | null> {
   const { baseURL, apiKey, model } = env.rerank;
   if (!baseURL || !apiKey || !model || !documents.length) return null;
@@ -149,7 +150,7 @@ export async function rerank(query: string, documents: string[]): Promise<Rerank
   const starts = Array.from({ length: Math.ceil(documents.length / RERANK_BATCH) }, (_, i) => i * RERANK_BATCH);
   const batches = await Promise.all(
     starts.map((start) =>
-      hedged((signal) => rerankBatch(start, signal), { delayMs: 1000, attempts: 2, timeoutMs: 6000 }, rerankLane),
+      hedged((signal) => rerankBatch(start, signal), { delayMs: 1000, attempts: 3, timeoutMs: 5000 }, rerankLane),
     ),
   );
   return batches.flat();

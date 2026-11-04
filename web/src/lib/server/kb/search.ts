@@ -71,8 +71,10 @@ const SEMANTIC_CANDIDATES = 40;
 const RERANK_CANDIDATES = 30;
 const RERANK_EXTRAS = 10;
 const RERANK_PER_DOC = 3;
-// 第一批重排完成后，最多再等问题的向量这么久；再晚就不等了，只用关键词候选
+// 问题的向量最多等到：第一批重排完成后再过 0.5 秒，并且从检索开始算不少于 2 秒；再晚就不等了，只用关键词候选。
+// 实测对冲后的向量 97% 在 2 秒内返回，而第一批重排快时 0.3 秒就完成，只按重排算会错过不少向量
 const SEMANTIC_GRACE_MS = 500;
+const SEMANTIC_MIN_WAIT_MS = 2000;
 // 4096 维逐段算一遍约 38 毫秒，并且占住主线程：先用归一化的前 512 维粗筛 400 段，再按完整维度精算。
 // 用 53 道评测题实测：前 40 名与全量扫描重合 99.4%，第一名全部一致，耗时降到约 8 毫秒
 const PREFIX_DIM = 512;
@@ -100,6 +102,11 @@ const CATEGORY_WEIGHT: Record<string, number> = {
 // 官网附件/ 是识图模型转写的官网原文，没有人工核实，和官网页面同等对待
 const CURATED_WEIGHT = 1.3;
 const SITE_DOC = /^官网(附件)?\//;
+// 2015 年以前的官网新闻不参与检索（资料库和 knowledge/ 里的文件都保留，改回只需改这个年份）。
+// 十几年前的新闻常被重排模型打高分，回答就会拿过时信息当依据，如 2009 年的门诊时间、2008 届的就业率。
+// 2026-11 逐题对比：去掉后 6 道题不再引用旧闻，1 道题少了出处；再把 2015—2019 年的也去掉，得失相抵
+const NEWS_SINCE = "2015";
+const NOT_OLD_NEWS = `NOT (kind = '新闻' AND COALESCE(updated, '9999') < '${NEWS_SINCE}')`;
 
 const COLUMNS = "rowid, id, doc_path, doc_title, heading, content, category, kind, source_url, updated";
 
@@ -149,7 +156,7 @@ export function indexTerms(chunk: { docTitle: string; heading: string; content: 
 }
 
 // ---------- 语义向量（配置了 EMBEDDING_MODEL 才启用）----------
-// 所有向量归一化后放进一整块连续内存，算相似度只需点积（1 万段 × 4096 维约 170MB）；
+// 所有向量归一化后放进一整块连续内存，算相似度只需点积（不含 2015 年前的新闻约 7 千段，× 4096 维约 110MB）；
 // prefix 是各段前 PREFIX_DIM 维单独归一化后的副本，用来粗筛（约 22MB），维度不高时不建
 type VectorIndex = { model: string; dim: number; rowids: Int32Array; matrix: Float32Array; prefix: Float32Array | null };
 let vectorIndex: VectorIndex | null = null;
@@ -176,15 +183,14 @@ function loadVectors(model: string): VectorIndex | null {
     .get(model) as { embedding: Uint8Array } | undefined;
   if (!first) return null;
   const dim = first.embedding.byteLength / 4;
-  const count = (db
-    .prepare("SELECT COUNT(*) AS n FROM kb_chunks WHERE embedding IS NOT NULL AND embedding_model = ? AND length(embedding) = ?")
-    .get(model, dim * 4) as { n: number }).n;
+  const where = `embedding IS NOT NULL AND embedding_model = ? AND length(embedding) = ? AND ${NOT_OLD_NEWS}`;
+  const count = (db.prepare(`SELECT COUNT(*) AS n FROM kb_chunks WHERE ${where}`).get(model, dim * 4) as { n: number }).n;
 
   const matrix = new Float32Array(count * dim);
   const rowids = new Int32Array(count);
   let i = 0;
   const rows = db
-    .prepare("SELECT rowid, embedding FROM kb_chunks WHERE embedding IS NOT NULL AND embedding_model = ? AND length(embedding) = ?")
+    .prepare(`SELECT rowid, embedding FROM kb_chunks WHERE ${where}`)
     .iterate(model, dim * 4) as Iterable<{ rowid: number; embedding: Uint8Array }>;
   for (const row of rows) {
     if (i >= count) break;
@@ -319,6 +325,7 @@ export function searchKnowledge(query: string, limit = 5): Promise<SearchResult>
 }
 
 async function runSearch(query: string, limit: number): Promise<{ result: SearchResult; complete: boolean }> {
+  const started = performance.now();
   const empty: SearchResult = { hits: [], topSimilarity: null, topCoverage: 0, lowConfidence: true };
   const total = chunkCount();
   const plan = planQuery(query);
@@ -347,12 +354,15 @@ async function runSearch(query: string, limit: number): Promise<{ result: Search
   // 1. 召回：问题的向量（要调接口）先发出去，同时查关键词（问题里的词 + 同义词）
   const knownTerms = lookupTerms.filter((term) => docFreq.has(term));
   const semanticPromise = semanticSearch(query);
+  // 先只在全文索引里按 BM25 取前 3 倍，再联表去掉旧新闻：在联表查询里直接过滤要读每一条命中的段落，慢好几倍。
+  // 用全部评测题核对过，取 3 倍时和直接过滤的结果完全一致
   const keywordRows = knownTerms.length
     ? (db
         .prepare(
           `SELECT c.rowid AS rowid, c.id, c.doc_path, c.doc_title, c.heading, c.content, c.category, c.kind, c.source_url, c.updated
-           FROM kb_fts JOIN kb_chunks c ON c.rowid = kb_fts.rowid
-           WHERE kb_fts MATCH ? ORDER BY bm25(kb_fts) LIMIT ${KEYWORD_CANDIDATES}`,
+           FROM (SELECT rowid, bm25(kb_fts) AS score FROM kb_fts WHERE kb_fts MATCH ? ORDER BY score LIMIT ${KEYWORD_CANDIDATES * 3}) f
+           JOIN kb_chunks c ON c.rowid = f.rowid
+           WHERE ${NOT_OLD_NEWS} ORDER BY f.score LIMIT ${KEYWORD_CANDIDATES}`,
         )
         .all(knownTerms.map((term) => `"${term}"`).join(" OR ")) as ChunkRow[])
     : [];
@@ -423,11 +433,19 @@ async function runSearch(query: string, limit: number): Promise<{ result: Search
       () => false,
     );
 
-    // 3b. 等问题的向量：最多等到第一批重排完成后 0.5 秒
-    const found = await Promise.race([
-      semanticPromise,
-      firstSettled.then(() => sleep(SEMANTIC_GRACE_MS)).then(() => null),
-    ]);
+    // 3b. 等问题的向量（等多久见 SEMANTIC_MIN_WAIT_MS）。关键词一段都没找到，或者第一批里没有一段算得上相关
+    // （英文、错别字、口语说法常见），只能靠语义检索，就一直等到向量返回（embedQuery 自己最多 4 秒）。
+    // 第一批重排失败时后面改用粗排，也不为向量多等
+    const firstUseful = firstRerank.then(
+      (items) => items.some((item) => (item.relevance ?? 0) >= env.rerankMinScore),
+      () => true,
+    );
+    const giveUp = Promise.all([
+      firstUseful,
+      firstSettled.then(() => sleep(SEMANTIC_GRACE_MS)),
+      sleep(Math.max(0, SEMANTIC_MIN_WAIT_MS - (performance.now() - started))),
+    ]).then(([useful]) => (useful ? null : semanticPromise));
+    const found = await Promise.race([semanticPromise, giveUp]);
     complete = found !== null;
     semantic = found ?? semantic;
 
@@ -441,9 +459,13 @@ async function runSearch(query: string, limit: number): Promise<{ result: Search
       RERANK_EXTRAS,
       used,
     );
-    const [first, second] = await Promise.allSettled([firstRerank, rerankCandidates(query, extras)]);
+    const secondRerank = rerankCandidates(query, extras);
+    // 第二批只在第一批成功时才用上：第一批失败就直接用粗排结果，不再等第二批（上游拥堵时第二批也要等到超时）
+    secondRerank.catch(() => {});
+    const [first] = await Promise.allSettled([firstRerank]);
 
     if (first.status === "fulfilled") {
+      const [second] = await Promise.allSettled([secondRerank]);
       if (second.status === "rejected") {
         complete = false;
         console.error("[kb] 第二批重排失败：", second.reason instanceof Error ? second.reason.message : second.reason);
