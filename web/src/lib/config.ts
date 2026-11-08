@@ -7,6 +7,13 @@ export const site = {
   description:
     "东莞城市学院校园智能助手：回答校园问题并注明出处，拍下通知就能一键加入手机日历。",
   disclaimer: "回答依据学校公开资料整理，重要事项请以学校官方通知为准",
+  // 体验问卷（问卷星），用于用户体验评测。题数和时长只用于入口文案，改问卷后记得同步
+  survey: {
+    url: "https://v.wjx.cn/vm/YHVne3y.aspx",
+    provider: "问卷星",
+    questions: 10,
+    minutes: 2,
+  },
   suggestions: [
     {
       icon: "map",

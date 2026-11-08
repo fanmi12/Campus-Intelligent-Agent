@@ -1,6 +1,6 @@
 "use client";
 
-import { Ellipsis, History, LayoutDashboard, Monitor, Moon, ShieldCheck, SquarePen, Sun } from "lucide-react";
+import { ClipboardList, Ellipsis, History, LayoutDashboard, Monitor, Moon, ShieldCheck, SquarePen, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,12 +19,16 @@ export function ChatHeader({
   onNewChat,
   onOpenHistory,
   onOpenPrivacy,
+  onOpenSurvey,
+  surveySubmitted = false,
   canReset,
   busy = false,
 }: {
   onNewChat?: () => void;
   onOpenHistory?: () => void;
   onOpenPrivacy?: () => void;
+  onOpenSurvey?: () => void;
+  surveySubmitted?: boolean;
   canReset?: boolean;
   busy?: boolean;
 }) {
@@ -68,6 +72,14 @@ export function ChatHeader({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
+            {/* 对话里的问卷邀请关掉后，这里是常驻入口 */}
+            {onOpenSurvey && (
+              <DropdownMenuItem onClick={onOpenSurvey}>
+                <ClipboardList />
+                体验问卷
+                {surveySubmitted && <span className="ml-auto text-xs text-muted-foreground">已提交</span>}
+              </DropdownMenuItem>
+            )}
             {onOpenPrivacy && (
               <DropdownMenuItem onClick={onOpenPrivacy}>
                 <ShieldCheck />
