@@ -14,6 +14,8 @@ import { Aurora } from "./glow";
 import { ChatHeader } from "./header";
 import { AssistantMessage, ThinkingMessage, UserMessage } from "./message";
 import { PrivacyDialog } from "./privacy-dialog";
+import { SurveyInvite } from "./survey-invite";
+import { SurveySheet } from "./survey-sheet";
 import {
   createChatId,
   deleteChat,
@@ -29,6 +31,7 @@ import {
   type SavedChat,
 } from "./storage";
 import { useAppStatus } from "./use-app-status";
+import { useSurvey, type Survey } from "./use-survey";
 import { Welcome } from "./welcome";
 
 // 只有最新一条消息带图片原图，历史图片的识别结果服务端会从对话里取，省流量。
@@ -55,6 +58,14 @@ function friendlyError(error: Error): string {
   if (/^[一-鿿][^\n]{0,60}$/.test(error.message)) return error.message;
   if (/fetch|network|Failed/i.test(error.message)) return "网络好像断了，检查一下网络再试";
   return "出了点问题，请稍后再试";
+}
+
+// 有正文或卡片的回答才算完成了一次校园任务；排队中、出错的空回答不算
+function hasAnswer(message: AppUIMessage | undefined): boolean {
+  return (
+    message?.role === "assistant" &&
+    message.parts.some((part) => (part.type === "text" && part.text.trim().length > 0) || part.type.startsWith("tool-"))
+  );
 }
 
 function ScrollToBottomButton() {
@@ -86,6 +97,7 @@ function ChatSession({
   onOpenHistory,
   onOpenPrivacy,
   onHistoryChange,
+  survey,
 }: {
   session: SavedChat;
   demo: boolean;
@@ -94,6 +106,7 @@ function ChatSession({
   onOpenHistory: () => void;
   onOpenPrivacy: () => void;
   onHistoryChange: (chats: ChatSummary[]) => void;
+  survey: Survey;
 }) {
   const { messages, sendMessage, status, stop, error, regenerate, clearError } = useChat<AppUIMessage>({
     id: session.id,
@@ -115,6 +128,8 @@ function ChatSession({
   }
 
   const last = messages.at(-1);
+  // 至少拿到一次完整回答后才邀请填写问卷，提交过或点了"不再提示"就不再出现
+  const showSurveyInvite = !busy && !error && hasAnswer(last) && !survey.submitted && !survey.dismissed;
 
   return (
     <div className="relative flex h-dvh flex-col bg-aurora">
@@ -124,6 +139,8 @@ function ChatSession({
         onNewChat={onNewChat}
         onOpenHistory={onOpenHistory}
         onOpenPrivacy={onOpenPrivacy}
+        onOpenSurvey={survey.openSurvey}
+        surveySubmitted={survey.submitted}
         canReset={messages.length > 0 && !busy}
         busy={busy}
       />
@@ -155,6 +172,10 @@ function ChatSession({
                 />
               );
             })
+          )}
+
+          {showSurveyInvite && (
+            <SurveyInvite resume={survey.mounted} onOpen={survey.openSurvey} onDismiss={survey.dismiss} />
           )}
 
           {status === "submitted" && last?.role === "user" && <ThinkingMessage />}
@@ -194,6 +215,8 @@ export default function ChatApp() {
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [deleted, setDeleted] = useState<DeletedChat | null>(null);
   const appStatus = useAppStatus();
+  // 问卷放在会话外层：开新对话、切换历史时 iframe 不重建，填到一半的答案还在
+  const survey = useSurvey();
 
   // 撤销入口保留 8 秒
   useEffect(() => {
@@ -232,6 +255,7 @@ export default function ChatApp() {
         onNewChat={newChat}
         onOpenHistory={() => setHistoryOpen(true)}
         onOpenPrivacy={() => setPrivacyOpen(true)}
+        survey={survey}
       />
       <ChatHistory
         open={historyOpen}
@@ -259,6 +283,7 @@ export default function ChatApp() {
         }}
       />
       <PrivacyDialog open={privacyOpen} onOpenChange={setPrivacyOpen} />
+      <SurveySheet survey={survey} />
     </>
   );
 }
