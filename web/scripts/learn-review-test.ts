@@ -149,4 +149,11 @@ assert.ok(cited.includes("依据：校园资料"));
 const pipe = lessonToMarkdown({ ...demoLesson, scenes: [{ ...demoLesson.scenes[3], content: { cards: [{ front: "a|b", back: "第一行\n第二行" }, { front: "c", back: "d" }, { front: "e", back: "f" }] } } as never] });
 assert.ok(pipe.includes("| a\\|b | 第一行 第二行 |"), "表格单元格里的竖线要转义，换行变空格");
 
+// 带图像和公式的讲解页：图注留在笔记里，公式原样（$…$）
+const figured = lessonToMarkdown({
+  ...demoLesson,
+  scenes: [{ ...demoLesson.scenes[0], content: { ...(demoLesson.scenes[0].content as object), figures: [{ t: "plot", x: [0, 1], y: [0, 1], curves: [{ f: "x" }], caption: "斜率为 1 的直线" }], points: [{ heading: "公式", body: "导数 $f'(x)=3x^2$", sourceNumbers: [] }, { heading: "第二点", body: "说明", sourceNumbers: [] }] } } as never],
+});
+assert.ok(figured.includes("> 图：斜率为 1 的直线") && figured.includes("- **公式**：导数 $f'(x)=3x^2$"), "笔记保留图注和公式");
+
 console.log("PASS: SM-2 scheduling (intervals, ease floor, 180-day cap, again/hard/easy), Beijing dates, due ordering, quiz scoring and weak points, Markdown notes export");

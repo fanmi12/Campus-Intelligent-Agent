@@ -20,6 +20,8 @@ function slideToMarkdown(scene: Extract<LessonScene, { kind: "slide" }>): string
     for (const row of slide.table.rows) lines.push(`| ${row.map(cell).join(" | ")} |`);
   }
   if (slide.example) lines.push("", `> **${slide.example.title}**：${slide.example.body}`);
+  // 图像导不出来，留一句图注（公式本身就是 $…$，Markdown 阅读器大多能排版）
+  for (const figure of slide.figures ?? []) if (figure.caption) lines.push("", `> 图：${figure.caption}`);
   return lines;
 }
 

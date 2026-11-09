@@ -30,6 +30,7 @@ export function sceneToText(scene: LessonScene): string {
       const lines = [head, slide.lead];
       slide.points.forEach((point) => lines.push(`- ${point.heading}：${point.body}`));
       if (slide.example) lines.push(`${slide.example.title}：${slide.example.body}`);
+      for (const figure of slide.figures ?? []) if (figure.caption) lines.push(`图：${figure.caption}`);
       if (slide.table) {
         lines.push(slide.table.columns.join(" | "));
         slide.table.rows.forEach((row) => lines.push(row.join(" | ")));
