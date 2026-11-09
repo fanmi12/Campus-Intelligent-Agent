@@ -1,3 +1,4 @@
+import { CITATION } from "./scene-text";
 import type { Lesson } from "./schema";
 
 // 间隔复习：简化版 SM-2（不引入新依赖，纯函数，方便测试；以后可以换成 ts-fsrs）。
@@ -93,7 +94,7 @@ export function lessonToReviewCards(lesson: Lesson): ReviewInput[] {
           lessonId: lesson.id,
           lessonTitle: lesson.title,
           front: card.front,
-          back: card.back.replace(/\s*\[\d{1,2}\]/g, "").trim(),
+          back: card.back.replace(new RegExp(`\\s*${CITATION.source}`, "g"), "").trim(),
         }))
       : [],
   );

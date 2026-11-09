@@ -12,7 +12,7 @@ import {
   summaryContentSchema,
   type LessonScene,
 } from "../src/lib/learn/schema";
-import { sceneToText, speakable } from "../src/lib/learn/scene-text";
+import { CITATION, sceneToText, speakable } from "../src/lib/learn/scene-text";
 
 // 小狮课堂的数据结构：合法样例通过，每条逻辑约束都能拦住不合格的输出，演示课程的每一页都合格。
 
@@ -149,6 +149,12 @@ assert.ok(previewLesson.scenes.some((item) => item.status === "failed") && previ
 // ---------- 文本工具 ----------
 assert.equal(speakable("找书 → 办借 [1] 😀 **粗体**"), "找书，办借 粗体");
 assert.equal(speakable("先 A -> 再 B"), "先 A，再 B");
+// [n] 出处编号只在不跟在标识符后面时才删：a[0]、arr[1][2] 这类下标要保留，连着的 [1][3] 都要删
+assert.equal(speakable("写 a[0]=2，再读 arr[1][2]。规定[1][3]"), "写 a[0]=2，再读 arr[1][2]。规定");
+assert.equal(speakable("nums[1] 是第二个数 [2]"), "nums[1] 是第二个数");
+// 闪卡和复习卡里剥出处编号用的同一个正则
+assert.equal("栈 a[5] 越界 [2]".replace(new RegExp(`\\s*${CITATION.source}`, "g"), "").trim(), "栈 a[5] 越界");
+assert.deepEqual([..."栈 a[5] 越界 [2][4]".matchAll(CITATION)].map((match) => Number(match[1])), [2, 4]);
 const text = sceneToText(demoLesson.scenes[0]);
 assert.ok(text.includes("番茄工作法是什么") && text.includes("讲解：") && text.includes("名字的来历"));
 assert.ok(sceneToText(demoLesson.scenes[2]).includes("答案：B"), "测验文本包含答案字母");

@@ -57,10 +57,14 @@ function labelOf(kind: LessonScene["kind"]): string {
   return { slide: "讲解", quiz: "测验", flashcards: "闪卡", discussion: "讨论", summary: "总结" }[kind];
 }
 
+// 出处编号 [n]。前面紧挨着字母、数字、下划线或右括号的是下标（a[0]、arr[1][2]），不是出处，不能当编号删掉；
+// 只能配合 replace / matchAll / split 使用（带 g 标志）
+export const CITATION = /(?<![A-Za-z0-9_)](?:\[\d{1,2}\])*)\[(\d{1,2})\]/g;
+
 // 朗读前清理：去掉 [n] 角标、emoji 和 Markdown 符号，箭头读成停顿
 export function speakable(text: string): string {
   return text
-    .replace(/\[\d+\]/g, "")
+    .replace(CITATION, "")
     .replace(/\p{Extended_Pictographic}/gu, "")
     .replace(/\s*[→➜➡]\s*|\s*->\s*/g, "，")
     .replace(/[*#>`_~|]/g, "")

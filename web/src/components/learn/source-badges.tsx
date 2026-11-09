@@ -5,6 +5,7 @@ import { createContext, Fragment, useContext, useMemo, useState, type ReactNode 
 import { SourceSheet } from "@/components/chat/sources";
 import type { SourceItem } from "@/lib/ai/types";
 import type { Grounding, LessonSource } from "@/lib/learn/schema";
+import { CITATION } from "@/lib/learn/scene-text";
 import styles from "./learn.module.css";
 
 // 课程里的出处：要点旁、闪卡、总结里的 [n] 角标，点开用聊天里同一个出处面板显示原文片段
@@ -74,7 +75,7 @@ export function SourceBadges({ numbers }: { numbers: number[] }) {
 export function RichText({ text }: { text: string }) {
   const { sources } = useContext(SourceContext);
   if (!sources.length) return <>{text}</>;
-  const parts = text.split(/\[(\d{1,2})\]/);
+  const parts = text.split(CITATION);
   return (
     <>
       {parts.map((part, index) => {
@@ -88,8 +89,8 @@ export function RichText({ text }: { text: string }) {
 
 // 把文字末尾的 [n] 拆出来（闪卡的卡面是一个按钮，里面不能再放按钮，角标放在卡片下面）
 export function splitCitations(text: string): { text: string; numbers: number[] } {
-  const numbers = [...text.matchAll(/\[(\d{1,2})\]/g)].map((match) => Number(match[1]));
-  return { text: text.replace(/\s*\[\d{1,2}\]/g, "").trim(), numbers: [...new Set(numbers)] };
+  const numbers = [...text.matchAll(CITATION)].map((match) => Number(match[1]));
+  return { text: text.replace(new RegExp(`\\s*${CITATION.source}`, "g"), "").trim(), numbers: [...new Set(numbers)] };
 }
 
 // 依据标注：告诉学习者这节课的内容从哪来
