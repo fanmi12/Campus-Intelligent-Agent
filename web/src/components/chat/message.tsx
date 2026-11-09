@@ -23,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { BrandAvatar } from "./brand-avatar";
 import { CalendarCard } from "./calendar-card";
 import { Spark } from "./glow";
+import { LessonCard } from "./lesson-card";
 import { Markdown } from "./markdown";
 import { LocationCard } from "./location-card";
 import { RichResult } from "./rich-result";
@@ -278,6 +279,9 @@ export function AssistantMessage({
           }
           if (part.type === "tool-showCampusMap") {
             return <LocationCard key={part.toolCallId} part={part} />;
+          }
+          if (part.type === "tool-createLesson") {
+            return <LessonCard key={part.toolCallId} part={part} streaming={streaming} />;
           }
           if (part.type === "tool-recommendCampusFood" || part.type === "tool-buildChecklist" || part.type === "tool-buildStudyCards" || part.type === "tool-showContactCard" || part.type === "tool-buildExamMemo") {
             return <RichResult key={part.toolCallId} part={part} />;

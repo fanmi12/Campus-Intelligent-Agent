@@ -44,7 +44,7 @@ export const site = {
       title: "办事清单",
       prompt: "复学申请有哪些步骤？帮我整理成可以勾选的办事清单。",
     },
-    { icon: "study", title: "英语复习卡", prompt: "帮我复习几个校园通知中常见的英语单词，做成翻面卡和小测验。" },
+    { icon: "study", title: "AI 小课堂", prompt: "给我上一节 5 分钟的小课：图书馆怎么借书、续借和还书。" },
     { icon: "contact", title: "招生联系卡", prompt: "学校招生咨询电话是多少？帮我整理成联系卡。" },
   ],
 } as const;

@@ -105,6 +105,21 @@ export const tools = {
     inputSchema: z.object({ event: eventInputSchema, checklist: z.array(z.string().trim().min(1).max(150)).max(12), basis: basisSchema, sourceNumbers: z.array(z.number().int().min(1)).max(12).default([]) }),
     outputSchema: examOutputSchema,
   }),
+  // 小狮课堂：生成一节互动微课。这里只声明协议，创建课程（配额、排队、后台生成）的执行逻辑放在 server/ai/web-tools.ts。
+  createLesson: tool({
+    description: "用户想系统学习一个主题，或要求“讲一节课、上一节小课、做成课程、出几道题帮我学会”时调用，生成一节含讲解、测验、闪卡和总结的互动微课。简单的事实问答不要调用。",
+    inputSchema: z.object({
+      topic: z.string().trim().min(2).max(60).describe("用用户的话概括想学的主题，≤60 字"),
+      minutes: z.number().int().min(5).max(15).optional().describe("用户提到的时长（分钟），没提到就省略"),
+      level: z.enum(["入门", "进阶", "复习"]).optional().describe("用户提到的难度，没提到就省略"),
+    }),
+    outputSchema: z.object({
+      id: z.string(),
+      topic: z.string(),
+      url: z.string(),
+      status: z.enum(["generating", "ready", "failed"]),
+    }),
+  }),
   // 这里只声明协议，带 Key 的执行逻辑放在 server/ai/web-tools.ts。
   searchWeb: tool({
     description: "搜索实时网页。校园资料不足、用户要求联网/查最新信息或问题涉及近期通知、考试报名、出行等变化信息时调用。涉及本校先搜学校官方站点；query 最多 128 个字符，支持 site:、after: 等语法。结果中的 n 是回答引用编号。",
@@ -150,4 +165,4 @@ export const tools = {
 } satisfies ToolSet;
 
 export type AppTools = typeof tools;
-export const CORE_TOOL_NAMES = ["addToCalendar", "showCampusMap", "recommendCampusFood", "buildChecklist", "buildStudyCards", "showContactCard", "buildExamMemo"] as const;
+export const CORE_TOOL_NAMES = ["addToCalendar", "showCampusMap", "recommendCampusFood", "buildChecklist", "buildStudyCards", "showContactCard", "buildExamMemo", "createLesson"] as const;

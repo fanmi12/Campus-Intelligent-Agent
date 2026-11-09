@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, CircleAlert, FlaskConical, LoaderCircle, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, CircleAlert, FlaskConical, LoaderCircle, MessageCircleQuestion, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -8,6 +8,7 @@ import { getClientId } from "@/components/chat/storage";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { site } from "@/lib/config";
 import type { Lesson, LessonScene } from "@/lib/learn/schema";
+import { AskTeacher } from "./ask-teacher";
 import { GeneratingState } from "./generating-state";
 import { sendLearnEvent } from "./learn-events";
 import { LearnHeader } from "./learn-header";
@@ -28,7 +29,7 @@ import { useLesson } from "./use-lesson";
 export function SceneView({ scene, lesson, hasNext, onNext }: { scene: LessonScene; lesson: Lesson; hasNext: boolean; onNext: () => void }) {
   switch (scene.kind) {
     case "slide":
-      return <SlideScene scene={scene} lesson={lesson} />;
+      return <SlideScene scene={scene} lesson={lesson} hasNext={hasNext} onNext={onNext} />;
     case "quiz":
       return <QuizScene scene={scene} lesson={lesson} hasNext={hasNext} onNext={onNext} />;
     case "flashcards":
@@ -131,6 +132,7 @@ export function Classroom({ initialLesson }: { initialLesson: Lesson }) {
   const { lesson, owner, queuePosition, offline, missing, restart, patch } = useLesson(initialLesson);
   const progress = useProgress(lesson.id);
   const [retrying, setRetrying] = useState(false);
+  const [askOpen, setAskOpen] = useState(false);
   const main = useRef<HTMLElement>(null);
   const shownScene = useRef<number | null>(null);
 
@@ -263,6 +265,9 @@ export function Classroom({ initialLesson }: { initialLesson: Lesson }) {
           backHref="/learn"
           backLabel="返回小狮课堂"
         >
+          <Button variant="ghost" size="icon" aria-label="问狮老师" title="问狮老师" disabled={!scene || scene.status !== "ready"} onClick={() => setAskOpen(true)}>
+            <MessageCircleQuestion />
+          </Button>
           <LessonMenu lesson={lesson} owner={owner} canRetry={hasFailed && !generating} onRetry={retry} />
         </LearnHeader>
 
@@ -303,6 +308,8 @@ export function Classroom({ initialLesson }: { initialLesson: Lesson }) {
             </div>
           </footer>
         )}
+        {/* 提问记录要跨页保留，所以抽屉一直挂着，只是按页面切换提问的上下文 */}
+        {scene && !missing && <AskTeacher lesson={lesson} scene={scene} open={askOpen} onOpenChange={setAskOpen} />}
       </div>
     </SourceProvider>
   );

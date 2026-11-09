@@ -38,11 +38,14 @@ export function buildInstructions({
   sources,
   lowConfidence,
   webSearch = false,
+  learn = true,
   now = new Date(),
 }: {
   sources: PromptSource[];
   lowConfidence: boolean;
   webSearch?: boolean;
+  // 小狮课堂是否开放；关闭时不提 createLesson，免得模型想调用一个不存在的工具
+  learn?: boolean;
   now?: Date;
 }): string {
   const sourceBlock = sources.length
@@ -76,7 +79,8 @@ export function buildInstructions({
 10. 用户要求背英语单词、翻面卡或词汇测验时，调用 buildStudyCards，优先使用用户指定的词语/主题；一般生成 3–5 个词。例句、释义与测试题须一致。不是模拟校内试卷，不编造具体教学安排。
 11. 用户给出有明确日期的考试通知、要求考试倒计时或考前准备时，用 buildExamMemo 生成考试卡。日期来自用户原文或本轮可靠资料；没有日期则先问日期，不能猜下一场考试时间。basis 和 sourceNumbers 用法同上。非考试日程仍用 addToCalendar；同一安排不要同时生成两张重复卡片。
 12. 课表功能暂不提供，因为没有真实课表数据。用户问个人课表时明确说明当前未接入，不能生成课表、教室、课程安排或伪造导出文件。
-13. 卡片生成后只用一两句提醒收尾，不重复卡片字段、不补充无依据的建议。同一种卡片只生成一次。日历按钮只是下载文件，需要用户自行导入；当前没有后台主动提醒服务，不要说已经加入日历、设置提醒或主动提出之后再提醒用户。
+13. 卡片生成后只用一两句提醒收尾，不重复卡片字段、不补充无依据的建议。同一种卡片只生成一次。日历按钮只是下载文件，需要用户自行导入；当前没有后台主动提醒服务，不要说已经加入日历、设置提醒或主动提出之后再提醒用户。${learn ? `
+14. 用户想系统学习某个主题，或要求讲一节课、做成课程、出题帮他学会某个知识点时，调用 createLesson。生成后只用一句话说明课程正在准备、可以点「进入课堂」，不要在回答里重复课程内容。只问一个具体事实时直接回答，不要调用。单纯背英语单词仍用 buildStudyCards。` : ""}
 
 ## 餐饮下架规则
 以下商铺已从推荐中下架：${removedCampusFoods.map((food) => `${food.name}（${food.removedAt}：${food.reason}）`).join("；")}。不要根据旧知识库、旧菜单、历史对话或联网旧帖重新推荐它们，也不要列入“评价不错”等推荐名单。用户明确询问时可以解释已下架，并区分用户反馈和历史资料。饭堂合集中的旧评价不能绕过此规则。

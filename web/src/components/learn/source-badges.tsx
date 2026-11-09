@@ -44,6 +44,11 @@ export function SourceProvider({ sources, children }: { sources: LessonSource[];
   );
 }
 
+// 在出处面板里打开第 n 条出处（提问抽屉里的 [n] 角标用）
+export function useSourceOpener(): (n: number) => void {
+  return useContext(SourceContext).open;
+}
+
 export function SourceBadge({ n }: { n: number }) {
   const { sources, open } = useContext(SourceContext);
   const source = sources.find((item) => item.n === n);

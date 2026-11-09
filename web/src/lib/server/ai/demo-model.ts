@@ -112,6 +112,7 @@ export function createDemoModel({
           buildStudyCards: "复习卡准备好了，可以翻面记忆，再做小测验。",
           showContactCard: "联系卡整理好了，可以复制电话或保存联系人。",
           buildExamMemo: "考试备忘整理好了，导出的日历文件还需要自行导入日历。",
+          createLesson: "课程正在准备中，准备好后点「进入课堂」就能开始学习。",
         };
         parts = textParts(`${replies[name ?? ""] ?? "日程卡片已经生成好了，点「加入日历」可以导出日历文件。"}${DEMO_NOTE}`);
       } else {
@@ -136,6 +137,11 @@ export function createDemoModel({
           parts = call("recommendCampusFood", { budget: Number(userText.match(/(\d{1,3})\s*[元块]/)?.[1] ?? 20), category: /面食|想吃面/.test(userText) ? "面食" : /米饭/.test(userText) ? "米饭" : "全部" });
         } else if (canUse("buildStudyCards") && /单词|词汇|背英语|复习英语/.test(userText)) {
           parts = call("buildStudyCards", starterStudy);
+        } else if (canUse("createLesson") && /(上|讲)一?节.{0,12}课|小课堂|做成.{0,4}课|教我/.test(userText)) {
+          // 主题取冒号后面的部分，去掉「给我上一节课」这类前缀；时长取「5 分钟」这样的数字
+          const minutes = Number(userText.match(/(\d{1,2})\s*分钟/)?.[1]);
+          const topic = userText.replace(/^.*[：:]/, "").replace(/^(请|麻烦)?(给我|帮我)?(教我|(上|讲)一?节.{0,12}?课)/, "").replace(/[。！!？?\s]+$/, "").trim().slice(0, 60);
+          parts = call("createLesson", { topic: topic.length >= 2 ? topic : "番茄工作法入门", ...(minutes >= 5 && minutes <= 15 ? { minutes } : {}) });
         } else if (canUse("showContactCard") && /招生.*(?:电话|联系)|(?:电话|联系).*招生/.test(userText)) {
           const source = sources.find((source) => /招生热线/.test(source.content));
           const line = source?.content.split("\n").find((line) => /招生热线/.test(line)) ?? "";

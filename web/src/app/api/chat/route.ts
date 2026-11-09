@@ -17,7 +17,7 @@ import { getChatModel } from "@/lib/server/ai/models";
 import { buildInstructions, isNoAnswerReply, type PromptSource } from "@/lib/server/ai/prompt";
 import { readImages } from "@/lib/server/ai/vision";
 import { createChatTools } from "@/lib/server/ai/web-tools";
-import { hasVision, hasWebSearch, isDemoMode } from "@/lib/server/env";
+import { env, hasVision, hasWebSearch, isDemoMode } from "@/lib/server/env";
 import { ensureKnowledgeIndexed } from "@/lib/server/kb/ingest";
 import { searchKnowledge } from "@/lib/server/kb/search";
 import { logChat } from "@/lib/server/logs";
@@ -210,13 +210,13 @@ export async function POST(req: Request) {
       }));
       const result = streamText({
         model: getChatModel() ?? createDemoModel({ sources: promptSources, lowConfidence }),
-        instructions: buildInstructions({ sources: promptSources, lowConfidence, webSearch: hasWebSearch }),
+        instructions: buildInstructions({ sources: promptSources, lowConfidence, webSearch: hasWebSearch, learn: env.learn.enabled }),
         messages: await convertToModelMessages(prepareForModel(messages, visionText), {
           tools,
           ignoreIncompleteToolCalls: true,
         }),
         tools: createChatTools({
-          question, sources, signal: workSignal,
+          question, sources, signal: workSignal, owner,
           userEvidence: prepareForModel(messages, visionText).filter((message) => message.role === "user").map(textOf).join("\n"),
           sourceContents: new Map(promptSources.map((source) => [source.n, source.content])),
           onSources: (trustedResult) => {
@@ -225,7 +225,8 @@ export async function POST(req: Request) {
           },
           onProgress: (id, data) => writer.write({ type: "data-webSearch", id, data }),
         }),
-        activeTools: hasWebSearch ? [...CORE_TOOL_NAMES, "searchWeb", "readWebPage"] : [...CORE_TOOL_NAMES],
+        // 小狮课堂关闭时，聊天里也不再提供「生成课程」
+        activeTools: [...CORE_TOOL_NAMES.filter((name) => env.learn.enabled || name !== "createLesson"), ...(hasWebSearch ? (["searchWeb", "readWebPage"] as const) : [])],
         stopWhen: isStepCount(6),
         // 卡片完成后或最后一步只整理回答，避免重复卡片或只留下工具结果。
         prepareStep: ({ steps, stepNumber }) => hasCardResult(steps) || stepNumber >= 5 ? { activeTools: [], toolChoice: "none" as const } : {},

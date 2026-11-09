@@ -26,7 +26,7 @@
 
 /* ---------- 讲解页 ---------- */
 .points { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
-.point { display: flex; gap: 12px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); padding: 14px; transition: opacity 250ms, border-color 250ms, background-color 250ms, box-shadow 250ms; }
+.point { scroll-margin-bottom: 150px; display: flex; gap: 12px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); padding: 14px; transition: opacity 250ms, border-color 250ms, background-color 250ms, box-shadow 250ms; }
 .point[data-active="true"] { border-color: var(--primary); background: var(--accent); box-shadow: 0 0 0 1px var(--primary); }
 .point[data-dim="true"] { opacity: 0.55; }
 .pointIndex { display: grid; width: 28px; height: 28px; flex-shrink: 0; place-items: center; border-radius: 999px; background: color-mix(in oklch, var(--primary) 12%, transparent); color: var(--primary); font-size: 13px; font-weight: 600; }
@@ -54,6 +54,12 @@
 .captionHint { color: var(--muted-foreground); }
 .controls { display: flex; align-items: center; gap: 6px; padding: 6px 10px 10px; }
 .controls .spacer { flex: 1; }
+.narrationOptions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 0 12px 10px; }
+.chipSm { display: inline-flex; min-height: 32px; align-items: center; gap: 4px; border: 1px solid var(--border); border-radius: 999px; background: var(--card); padding: 0 11px; font-size: 12.5px; color: var(--muted-foreground); transition: background-color 150ms, border-color 150ms; }
+button.chipSm:hover { background: var(--muted); }
+.chipSm[aria-pressed="true"] { border-color: color-mix(in oklch, var(--primary) 50%, var(--border)); background: var(--accent); color: var(--accent-foreground); }
+.chipSm[data-static="true"] { border-style: dashed; }
+.chipSm:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 
 /* ---------- 测验 ---------- */
 .options { display: flex; min-width: 0; flex-direction: column; gap: 10px; margin: 0; border: 0; padding: 0; }
@@ -106,7 +112,9 @@
 .mapChip { border-radius: 999px; background: var(--muted); padding: 3px 10px; font-size: 13px; line-height: 1.6; }
 @media (min-width: 640px) { .map { grid-template-columns: 1fr 1fr; } }
 
-/* ---------- 讨论 ---------- */
+/* ---------- 讨论、提问 ---------- */
+.composer { display: flex; align-items: flex-end; gap: 6px; margin-top: 12px; border: 1px solid var(--border); border-radius: 22px; background: color-mix(in oklch, var(--card) 94%, transparent); padding: 6px; box-shadow: 0 -8px 24px -14px color-mix(in oklch, var(--foreground) 30%, transparent); backdrop-filter: blur(10px); }
+.composer:focus-within { border-color: var(--primary); }
 .bubble { max-width: 100%; border: 1px solid var(--border); border-radius: 4px 18px 18px 18px; background: var(--card); padding: 10px 14px; font-size: 15px; line-height: 1.75; overflow-wrap: anywhere; white-space: pre-wrap; }
 .bubble[data-self="true"] { border-color: transparent; border-radius: 18px 4px 18px 18px; background: var(--primary); color: var(--primary-foreground); }
 
@@ -129,5 +137,5 @@ a.row:hover { border-color: color-mix(in oklch, var(--primary) 30%, var(--border
 
 @media (prefers-reduced-motion: reduce) {
   .skeleton { animation: none; }
-  .point, .option, .mark, .flashInner, .scoreBar > span, .progressBar > span, .navItem, .chip, .row { transition: none; }
+  .point, .option, .mark, .flashInner, .scoreBar > span, .progressBar > span, .navItem, .chip, .chipSm, .row { transition: none; }
 }

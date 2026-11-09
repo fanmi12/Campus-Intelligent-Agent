@@ -3,13 +3,14 @@
 import { Trophy } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
+import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { scoreOf, weakPoints } from "@/lib/learn/progress";
 import type { Lesson, LessonScene } from "@/lib/learn/schema";
 import { formatDuration } from "../format";
 import { KnowledgeMap } from "../knowledge-map";
 import { sendLearnEvent } from "../learn-events";
-import { resetProgress, updateProgress, upsertLocalLesson, usePrefs, useProgress } from "../learn-storage";
+import { resetProgress, updatePrefs, updateProgress, upsertLocalLesson, usePrefs, useProgress } from "../learn-storage";
 import styles from "../learn.module.css";
 import { NarrationBar } from "../narration-bar";
 import { BasisLine, RichText } from "../source-badges";
@@ -61,7 +62,14 @@ export function SummaryScene({ scene, lesson }: { scene: SummaryScene; lesson: L
   const content = scene.content!;
   const progress = useProgress(lesson.id);
   const prefs = usePrefs();
-  const narration = useNarration(content.narration, { rate: prefs.rate });
+  const narration = useNarration(content.narration, {
+    rate: prefs.rate,
+    voice: prefs.voice,
+    onFallback: () => {
+      toast.info("当前浏览器不支持朗读，已切换为字幕模式");
+      updatePrefs({ voice: "captions" });
+    },
+  });
   const started = narration.index >= 0;
   const active = narration.activePoint;
   const finished = progress.finishedAt !== undefined;
@@ -130,7 +138,7 @@ export function SummaryScene({ scene, lesson }: { scene: SummaryScene; lesson: L
           </Button>
         )}
       </div>
-      <NarrationBar narration={narration} label="播放总结" />
+      <NarrationBar narration={narration} label="播放总结" showAutoAdvance={false} />
     </>
   );
 }

@@ -1,16 +1,23 @@
 "use client";
 
-import { Captions, Pause, Play, RotateCcw, SkipBack, SkipForward } from "lucide-react";
+import { Captions, Pause, Play, RotateCcw, SkipBack, SkipForward, Volume2 } from "lucide-react";
+import { BrandAvatar } from "@/components/chat/brand-avatar";
 import { Button } from "@/components/ui/button";
 import { speakable } from "@/lib/learn/scene-text";
-import { BrandAvatar } from "@/components/chat/brand-avatar";
+import { updatePrefs, usePrefs } from "./learn-storage";
 import styles from "./learn.module.css";
-import type { Narration } from "./use-narration";
+import { useCanSpeak, type Narration } from "./use-narration";
 
-// 字幕条 + 播放控制：显示狮老师正在讲的这一句，当前要点会在上方高亮
-export function NarrationBar({ narration, label = "播放讲解" }: { narration: Narration; label?: string }) {
-  const { playing, ended, index, total, caption } = narration;
+const RATES = [0.9, 1, 1.2] as const;
+
+// 字幕条 + 播放控制：显示狮老师正在讲的这一句，当前要点会在上方高亮。
+// 可以切换朗读 / 字幕、调语速、开关「播完自动翻页」（偏好存在浏览器本地）
+export function NarrationBar({ narration, label = "播放讲解", showAutoAdvance = true }: { narration: Narration; label?: string; showAutoAdvance?: boolean }) {
+  const { playing, ended, index, total, caption, engine } = narration;
+  const prefs = usePrefs();
+  const canSpeak = useCanSpeak();
   const started = index >= 0;
+  const speech = canSpeak && prefs.voice !== "captions";
   return (
     <section className={styles.narration} aria-label="狮老师讲解">
       <div className={styles.caption}>
@@ -39,10 +46,42 @@ export function NarrationBar({ narration, label = "播放讲解" }: { narration:
           <SkipForward />
         </Button>
         <span className={styles.spacer} />
-        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-          <Captions className="size-3.5" />
-          {started ? `${index + 1}/${total}` : "字幕"}
+        <span className="text-xs text-muted-foreground" aria-live="off">
+          {started ? `${index + 1}/${total}` : ""}
         </span>
+      </div>
+      <div className={styles.narrationOptions}>
+        {canSpeak ? (
+          <button
+            type="button"
+            className={styles.chipSm}
+            aria-pressed={speech}
+            aria-label={speech ? "当前是朗读模式，点击改为字幕" : "当前是字幕模式，点击改为朗读"}
+            onClick={() => updatePrefs({ voice: speech ? "captions" : "auto" })}
+          >
+            {speech ? <Volume2 className="size-3.5" /> : <Captions className="size-3.5" />}
+            {speech ? "朗读" : "字幕"}
+          </button>
+        ) : (
+          <span className={styles.chipSm} data-static="true" title="当前浏览器不支持朗读">
+            <Captions className="size-3.5" />
+            字幕
+          </span>
+        )}
+        <button
+          type="button"
+          className={styles.chipSm}
+          aria-label={`语速 ${prefs.rate} 倍，点击切换`}
+          onClick={() => updatePrefs({ rate: RATES[(RATES.indexOf(prefs.rate) + 1) % RATES.length] })}
+        >
+          {prefs.rate}x
+        </button>
+        {showAutoAdvance && (
+          <button type="button" className={styles.chipSm} aria-pressed={prefs.autoAdvance} onClick={() => updatePrefs({ autoAdvance: !prefs.autoAdvance })}>
+            自动翻页{prefs.autoAdvance ? "：开" : ""}
+          </button>
+        )}
+        {started && engine === "captions" && canSpeak && prefs.voice !== "captions" && <span className="text-xs text-muted-foreground">已改用字幕</span>}
       </div>
     </section>
   );

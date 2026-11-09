@@ -1,13 +1,14 @@
 "use client";
 
 import { Lightbulb } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { toast } from "sonner";
 import type { Lesson, LessonScene, SlideContent } from "@/lib/learn/schema";
 import styles from "../learn.module.css";
 import { NarrationBar } from "../narration-bar";
 import { BasisLine, RichText, SourceBadges } from "../source-badges";
-import { usePrefs } from "../learn-storage";
-import { useNarration } from "../use-narration";
+import { updatePrefs, usePrefs } from "../learn-storage";
+import { requestAutoStart, useNarration } from "../use-narration";
 import { SceneHeader } from "./scene-header";
 
 export function SlideTable({ table }: { table: NonNullable<SlideContent["table"]> }) {
@@ -39,10 +40,27 @@ export function SlideTable({ table }: { table: NonNullable<SlideContent["table"]
   );
 }
 
-export function SlideScene({ scene, lesson }: { scene: Extract<LessonScene, { kind: "slide" }>; lesson: Lesson }) {
+export function SlideScene({ scene, lesson, hasNext, onNext }: { scene: Extract<LessonScene, { kind: "slide" }>; lesson: Lesson; hasNext: boolean; onNext: () => void }) {
   const content = scene.content!;
   const prefs = usePrefs();
-  const narration = useNarration(content.narration, { rate: prefs.rate });
+  // 播完自动翻页（偏好，默认关）：停 1.5 秒再翻，下一页自动开始播放
+  const advance = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(advance.current), []);
+  const narration = useNarration(content.narration, {
+    rate: prefs.rate,
+    voice: prefs.voice,
+    onFinish: () => {
+      if (!prefs.autoAdvance || !hasNext) return;
+      advance.current = setTimeout(() => {
+        requestAutoStart();
+        onNext();
+      }, 1500);
+    },
+    onFallback: () => {
+      toast.info("当前浏览器不支持朗读，已切换为字幕模式");
+      updatePrefs({ voice: "captions" });
+    },
+  });
   const started = narration.index >= 0;
   const active = narration.activePoint;
 

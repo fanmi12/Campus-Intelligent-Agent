@@ -1,7 +1,8 @@
 "use client";
 
-import { ArrowRight, Check, CircleCheck, CircleX, CircleDot, RotateCcw, X } from "lucide-react";
+import { ArrowRight, Check, CircleCheck, CircleDot, CircleX, LoaderCircle, RotateCcw, Sparkles, X } from "lucide-react";
 import { useEffect, useId, useState } from "react";
+import { getClientId } from "@/components/chat/storage";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { answerKey, isChoiceCorrect, type AnswerRecord } from "@/lib/learn/progress";
@@ -118,8 +119,38 @@ function ShortQuestion({ lessonId, sceneId, question, index, total, onContinue }
   const key = answerKey(sceneId, index);
   const answer = useProgress(lessonId).answers[key];
   const [text, setText] = useState(answer?.text ?? "");
+  const [grading, setGrading] = useState(false);
+  const [gradeError, setGradeError] = useState("");
   const submitted = Boolean(answer);
   const rated = answer?.score !== undefined;
+  const byAi = answer?.graded === "ai";
+
+  // 交给 AI 批改；批改不可用（没网、额度、限流）时保存作答，让学习者对照参考答案自评
+  async function submit() {
+    const body = text.trim();
+    if (!body || grading) return;
+    setGrading(true);
+    setGradeError("");
+    try {
+      const response = await fetch(`/api/learn/lessons/${lessonId}/grade`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Client-Id": getClientId() },
+        body: JSON.stringify({ sceneId, question: index, answer: body }),
+      });
+      const data = (await response.json().catch(() => ({}))) as { score?: number; feedback?: string; hits?: string[]; missing?: string[]; error?: string };
+      if (response.ok && typeof data.score === "number") {
+        saveAnswer(lessonId, key, { text: body, score: data.score, feedback: data.feedback, hits: data.hits, missing: data.missing, graded: "ai" });
+      } else {
+        saveAnswer(lessonId, key, { text: body });
+        setGradeError(data.error ?? "AI 批改暂时不可用，请对照参考答案自评");
+      }
+    } catch {
+      saveAnswer(lessonId, key, { text: body });
+      setGradeError("网络好像断了，请对照参考答案自评");
+    } finally {
+      setGrading(false);
+    }
+  }
 
   function rate(score: number) {
     saveAnswer(lessonId, key, { ...answer, score, graded: "self" });
@@ -134,7 +165,7 @@ function ShortQuestion({ lessonId, sceneId, question, index, total, onContinue }
       <Textarea
         value={submitted ? (answer?.text ?? "") : text}
         onChange={(event) => setText(event.target.value.slice(0, MAX_ANSWER))}
-        disabled={submitted}
+        disabled={submitted || grading}
         rows={4}
         placeholder="用自己的话写下答案…"
         aria-label="你的答案"
@@ -146,21 +177,55 @@ function ShortQuestion({ lessonId, sceneId, question, index, total, onContinue }
             {text.length}/{MAX_ANSWER}
           </p>
           <div className="flex flex-col gap-2">
-            <Button size="lg" disabled={!text.trim()} onClick={() => saveAnswer(lessonId, key, { text: text.trim() })}>
-              提交，看参考答案
+            <Button size="lg" disabled={!text.trim() || grading} onClick={() => void submit()}>
+              {grading ? <LoaderCircle className="animate-spin" /> : <Sparkles />}
+              {grading ? "狮老师批改中…" : "提交，请狮老师批改"}
             </Button>
-            <Button variant="ghost" onClick={() => saveAnswer(lessonId, key, { text: "", score: 0, graded: "self" })}>
+            <Button variant="ghost" disabled={grading} onClick={() => saveAnswer(lessonId, key, { text: "", score: 0, graded: "self" })}>
               不会，直接看参考答案
             </Button>
           </div>
         </>
       )}
+      {byAi && rated && (
+        <div role="status" className={styles.feedback} data-tone={TONE(answer?.score ?? 0)}>
+          <p className="flex items-baseline gap-2">
+            <strong>狮老师批改</strong>
+            <span className="text-2xl font-semibold tabular-nums">{answer?.score}</span>
+            <span className={styles.muted}>/ 100</span>
+          </p>
+          <div className={`${styles.scoreBar} my-2`} aria-hidden>
+            <span style={{ width: `${answer?.score ?? 0}%` }} />
+          </div>
+          <p>{answer?.feedback}</p>
+          {(answer?.hits?.length ?? 0) > 0 && (
+            <>
+              <strong className="mt-2 block">答到了</strong>
+              <ul className={styles.rubric}>
+                {answer?.hits?.map((item, itemIndex) => (
+                  <li key={itemIndex}>{item}</li>
+                ))}
+              </ul>
+            </>
+          )}
+          {(answer?.missing?.length ?? 0) > 0 && (
+            <>
+              <strong className="mt-2 block">还可以补充</strong>
+              <ul className={styles.rubric}>
+                {answer?.missing?.map((item, itemIndex) => (
+                  <li key={itemIndex}>{item}</li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+      )}
       {submitted && (
-        <div role="status" className={styles.feedback} data-tone={rated ? TONE(answer?.score ?? 0) : undefined}>
+        <div role="status" className={styles.feedback} data-tone={!byAi && rated ? TONE(answer?.score ?? 0) : undefined}>
           <strong>参考答案</strong>
           <br />
           <RichText text={question.reference} />
-          {question.rubric.length > 0 && (
+          {!byAi && question.rubric.length > 0 && (
             <>
               <br />
               <strong>得分点</strong>
@@ -177,6 +242,11 @@ function ShortQuestion({ lessonId, sceneId, question, index, total, onContinue }
       )}
       {submitted && !rated && (
         <div className="flex flex-col gap-2">
+          {gradeError && (
+            <p role="alert" className="text-sm text-muted-foreground">
+              {gradeError}
+            </p>
+          )}
           <p className="text-sm font-medium">对照参考答案，你觉得自己答得怎么样？</p>
           <div className={styles.marks}>
             <button type="button" className={styles.mark} data-mark="forgot" aria-pressed={false} onClick={() => rate(0)}>

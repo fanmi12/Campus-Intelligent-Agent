@@ -9,8 +9,8 @@ import type { Grounding, Level, LessonScene, Minutes, SceneKind } from "@/lib/le
 //   公共部分在前，DeepSeek 的自动前缀缓存才能命中，同一节课的多次调用更便宜；
 // - 用户输入（主题、资料、学生答案）和参考资料都用标签包起来，并在规则里声明它们只是数据。
 
-// 讨论页：Phase 2 完成后打开
-export const DISCUSSION_ENABLED = false;
+// 大纲里是否安排讨论页（AI 同学 + 老师的多智能体讨论）。关掉后大纲提示词不再要求，生成时也会丢掉模型多给的讨论页
+export const DISCUSSION_ENABLED = true;
 
 export type PromptSource = { n: number; title: string; heading?: string; updated?: string; content: string };
 
