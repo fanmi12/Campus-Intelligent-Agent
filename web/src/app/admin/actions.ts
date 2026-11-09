@@ -3,8 +3,11 @@
 import { refresh } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { LESSON_ID } from "@/lib/learn/schema";
 import { adminEnabled, checkPassword, endAdminSession, isAdmin, startAdminSession } from "@/lib/server/admin-auth";
 import { ingestKnowledge } from "@/lib/server/kb/ingest";
+import { learnJobs } from "@/lib/server/learn/jobs";
+import { deleteLesson, isBuiltinLesson } from "@/lib/server/learn/store";
 import { setQuestionStatus, type QuestionStatus } from "@/lib/server/logs";
 import { rateLimit } from "@/lib/server/rate-limit";
 
@@ -48,5 +51,14 @@ export async function updateQuestionStatus(id: string, status: QuestionStatus) {
   await requireAdmin();
   if (typeof id !== "string" || !STATUSES.includes(status)) throw new Error("参数不正确");
   setQuestionStatus(id, status);
+  refresh();
+}
+
+// 小狮课堂：删除一节课（内容审核）。正在生成的任务一并停掉
+export async function deleteLessonAction(id: string) {
+  await requireAdmin();
+  if (typeof id !== "string" || !LESSON_ID.test(id) || isBuiltinLesson(id)) throw new Error("参数不正确");
+  learnJobs.get(id)?.abort();
+  deleteLesson(id);
   refresh();
 }

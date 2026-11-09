@@ -222,4 +222,4 @@ export function gradePrompt(question: { prompt: string; reference: string; rubri
 
 // 图片资料转写指令（Phase 3 资料模式）
 export const MATERIAL_OCR_INSTRUCTION =
-  "完整转写图片中的学习资料文字，保持原有分行和层级，表格用 | 分隔，公式写成纯文本。不要补充图片里没有的内容。";
+  "完整转写图片中的学习资料文字，保持原有分行和层级，表格用 | 分隔，公式写成纯文本。不要补充图片里没有的内容。如果图片里没有可读的文字，只回复「无文字」，不要描述图片。";

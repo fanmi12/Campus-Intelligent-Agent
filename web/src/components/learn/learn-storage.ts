@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 import { emptyProgress, type CardMark, type DiscussionTurn, type LessonProgress, type AnswerRecord } from "@/lib/learn/progress";
+import { beijingToday, newReviewCard, type ReviewCard, type ReviewInput } from "@/lib/learn/review";
 import type { LessonStatus } from "@/lib/learn/schema";
 
 // 小狮课堂的本地存储：课程索引、学习进度、偏好（复习卡在 Phase 3 加入）。
@@ -11,6 +12,8 @@ import type { LessonStatus } from "@/lib/learn/schema";
 const LESSONS_KEY = "campus-agent:learn:lessons:v1";
 const PROGRESS_KEY = (id: string) => `campus-agent:learn:progress:v1:${id}`;
 const PREFS_KEY = "campus-agent:learn:prefs:v1";
+const REVIEW_KEY = "campus-agent:learn:review:v1";
+const MAX_REVIEW = 300;
 const MAX_LESSONS = 50;
 
 // ---------- 底层：带缓存的 JSON 读写 + 订阅 ----------
@@ -188,4 +191,40 @@ export function usePrefs(): Prefs {
 
 export function updatePrefs(patch: Partial<Prefs>) {
   writeRaw(PREFS_KEY, JSON.stringify({ ...readPrefs(), ...patch }));
+}
+
+// ---------- 复习卡 ----------
+const NO_CARDS: ReviewCard[] = [];
+
+function parseCards(value: unknown): ReviewCard[] {
+  if (!Array.isArray(value)) return NO_CARDS;
+  return value.filter(
+    (item): item is ReviewCard =>
+      isRecord(item) && typeof item.key === "string" && typeof item.front === "string" && typeof item.back === "string" && typeof item.due === "string" && typeof item.interval === "number" && typeof item.ease === "number",
+  );
+}
+
+export const readReviewCards = () => readJson(REVIEW_KEY, parseCards);
+
+export function useReviewCards(): ReviewCard[] {
+  return useSyncExternalStore(subscribe, readReviewCards, () => NO_CARDS);
+}
+
+// 最多 300 张，超出时丢掉最久没复习的
+function writeReviewCards(cards: ReviewCard[]) {
+  const kept = cards.length > MAX_REVIEW ? [...cards].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, MAX_REVIEW) : cards;
+  writeRaw(REVIEW_KEY, JSON.stringify(kept));
+}
+
+// 加入复习计划（已经在里面的不重复加），返回新加了几张；新卡片今天就可以复习
+export function addReviewCards(inputs: ReviewInput[], today = beijingToday()): number {
+  const existing = readReviewCards();
+  const known = new Set(existing.map((card) => card.key));
+  const added = inputs.filter((input) => !known.has(input.key)).map((input) => newReviewCard(input, today));
+  if (added.length) writeReviewCards([...existing, ...added]);
+  return added.length;
+}
+
+export function saveReviewCard(card: ReviewCard) {
+  writeReviewCards(readReviewCards().map((item) => (item.key === card.key ? card : item)));
 }

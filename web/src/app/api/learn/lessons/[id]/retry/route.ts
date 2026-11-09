@@ -19,7 +19,7 @@ export async function POST(req: Request, { params }: Params) {
   if (lesson.status === "generating" || isLessonRunning(id)) return fail("这节课还在备课中，请稍等", 409);
   if (lesson.status === "ready" && lesson.scenes.every((scene) => scene.status === "ready")) return fail("这节课已经完成，没有需要重新生成的页面", 409);
   // 基于用户资料的课程，资料超过保存期限被清掉后没法再生成
-  if (lesson.grounding === "material" && !getMaterial(id)) return fail("资料已过期，请重新创建这节课", 410);
+  if (lesson.grounding === "material" && !getMaterial(id)) return fail("资料已失效（超过保存期限，或没能从图片里读出文字），请重新创建这节课", 410);
   const refused = lessonQueue.check(owner);
   if (refused) return fail(refused, 429);
 

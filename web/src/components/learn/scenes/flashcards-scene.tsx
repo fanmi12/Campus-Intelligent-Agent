@@ -1,11 +1,13 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, RotateCw } from "lucide-react";
+import { BellPlus, Check, ChevronLeft, ChevronRight, RotateCw } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import type { CardMark } from "@/lib/learn/progress";
+import { lessonToReviewCards } from "@/lib/learn/review";
 import type { Lesson, LessonScene } from "@/lib/learn/schema";
-import { updateProgress, useProgress } from "../learn-storage";
+import { addReviewCards, updateProgress, useProgress, useReviewCards } from "../learn-storage";
 import styles from "../learn.module.css";
 import { BasisLine, SourceBadges, splitCitations } from "../source-badges";
 import { SceneHeader } from "./scene-header";
@@ -19,6 +21,9 @@ const MARKS: { mark: CardMark; label: string }[] = [
 export function FlashcardsScene({ scene, lesson }: { scene: Extract<LessonScene, { kind: "flashcards" }>; lesson: Lesson }) {
   const cards = scene.content!.cards;
   const marks = useProgress(lesson.id).cards;
+  const reviewKeys = new Set(useReviewCards().map((item) => item.key));
+  // 只加入这一页的闪卡
+  const pending = lessonToReviewCards({ ...lesson, scenes: [scene] }).filter((item) => !reviewKeys.has(item.key));
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const card = cards[index];
@@ -96,6 +101,14 @@ export function FlashcardsScene({ scene, lesson }: { scene: Extract<LessonScene,
           <ChevronRight />
         </Button>
       </div>
+      <Button
+        variant={pending.length ? "outline" : "ghost"}
+        disabled={!pending.length}
+        onClick={() => toast.success(`已加入 ${addReviewCards(pending)} 张闪卡`, { description: "今天就可以在小狮课堂首页开始复习" })}
+      >
+        {pending.length ? <BellPlus /> : <Check />}
+        {pending.length ? `加入复习计划（${pending.length} 张）` : "已加入复习计划"}
+      </Button>
       <BasisLine grounding={lesson.grounding} sourceCount={lesson.sources.length} />
     </div>
   );

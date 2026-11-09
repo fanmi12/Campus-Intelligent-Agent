@@ -1,4 +1,5 @@
 import { randomBytes } from "node:crypto";
+import { featuredLessons } from "@/lib/learn/featured";
 import { demoLesson } from "@/lib/learn/fixtures";
 import {
   LESSON_VERSION,
@@ -30,10 +31,12 @@ export function newLessonId(): string {
   return randomBytes(9).toString("base64url");
 }
 
-// 内置课程：演示课程（demo- 开头）和精选课程（f- 开头，Phase 3 接入）不进数据库
+// 内置课程：演示课程（demo- 开头）和精选课程（f- 开头）是随代码发布的静态内容，不进数据库
+const featuredById = new Map(featuredLessons.map((lesson) => [lesson.id, lesson]));
+
 function builtinLesson(id: string): Lesson | null {
   if (id === demoLesson.id) return demoLesson;
-  return null;
+  return featuredById.get(id) ?? null;
 }
 
 export const isBuiltinLesson = (id: string) => builtinLesson(id) !== null;
@@ -231,3 +234,8 @@ export function getLearnStats(sinceMs: number): LearnStats {
     recent: recent.map((row) => ({ id: row.id, title: row.title, topic: row.topic, status: row.status, views: row.views, createdAt: row.created_at })),
   };
 }
+
+// 最近几天的统计（后台用；在页面里直接写 Date.now() 会被 React 的纯度检查拦下，所以放在这里）
+export const getRecentLearnStats = (days = 7) => getLearnStats(Date.now() - days * 86_400_000);
+
+export const featuredSummaries = (): LessonSummary[] => featuredLessons.map(summarize);

@@ -1,6 +1,6 @@
 "use client";
 
-import { Ellipsis, Link2, RefreshCw, Trash2 } from "lucide-react";
+import { Download, Ellipsis, Link2, RefreshCw, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import type { Lesson } from "@/lib/learn/schema";
-import { removeLocalLesson } from "./learn-storage";
+import { exportNotes } from "./export";
+import { readProgress, removeLocalLesson } from "./learn-storage";
 
 // 课堂页右上角的「⋯」菜单：复制链接、重新生成失败页、删除（后两项只有创建者有）
 export function LessonMenu({ lesson, owner, canRetry, onRetry }: { lesson: Lesson; owner: boolean; canRetry: boolean; onRetry: () => void }) {
@@ -54,6 +55,10 @@ export function LessonMenu({ lesson, owner, canRetry, onRetry }: { lesson: Lesso
           <DropdownMenuItem onClick={copyLink}>
             <Link2 />
             复制链接
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => void exportNotes(lesson, readProgress(lesson.id))}>
+            <Download />
+            导出笔记
           </DropdownMenuItem>
           {owner && !builtin && canRetry && (
             <DropdownMenuItem onClick={onRetry}>

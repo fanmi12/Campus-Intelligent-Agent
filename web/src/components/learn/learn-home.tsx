@@ -8,6 +8,7 @@ import { FeaturedList } from "./featured-list";
 import { LearnHeader } from "./learn-header";
 import { LessonForm } from "./lesson-form";
 import { LessonList } from "./lesson-list";
+import { ReviewBanner } from "./review-banner";
 
 // 课堂首页 /learn：一句话备课、精选课程、我的课程
 export default function LearnHome() {
@@ -33,6 +34,7 @@ export default function LearnHome() {
         </section>
 
         <LessonForm />
+        <ReviewBanner />
         <FeaturedList />
         <LessonList />
 

@@ -35,6 +35,12 @@ const PAGE_FAILED = "这一页没生成成功";
 const SCENE_TOKENS: Record<SceneKind, number> = { slide: 2500, quiz: 2500, flashcards: 1500, discussion: 1200, summary: 2000 };
 const SPEAKER_PREFIX = /^(狮老师|老师)[:：]\s*/;
 
+// 识图结果里没有可用的文字：太短，或者模型说「无文字」（风景照、空白页）
+export function hasReadableText(text: string): boolean {
+  const plain = text.replace(/[\s\p{P}\p{S}]/gu, "");
+  return plain.length >= 8 && !/^(图片|图中|图像)?(中)?(没有|无|未见|不含)(任何|可读|可识别)?(的)?文字/.test(plain);
+}
+
 // 给同学看的失败原因：不把上游原始报错透给前端
 export class LessonError extends Error {}
 
@@ -192,7 +198,7 @@ export async function runLessonGeneration(id: string, options: GenerationOptions
           console.error(`[learn] ${id} 图片识别失败：${brief(error)}`);
           throw new LessonError("暂时没能识别图片，请改为直接粘贴文字");
         }
-        if (!recognized.trim()) throw new LessonError("没能从图片里读出文字，换一张清晰的照片试试");
+        if (!hasReadableText(recognized)) throw new LessonError("没能从图片里读出文字，换一张清晰的照片试试");
         // 转写结果存起来，重新生成时不用再识图
         material = [material, recognized.trim()].filter(Boolean).join("\n\n").slice(0, MAX_MATERIAL_CHARS);
         setMaterial(id, material);

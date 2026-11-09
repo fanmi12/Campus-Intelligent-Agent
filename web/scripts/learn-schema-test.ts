@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { featuredLessons } from "../src/lib/learn/featured";
 import { demoLesson, previewLesson } from "../src/lib/learn/fixtures";
 import {
   createLessonRequestSchema,
@@ -122,6 +123,15 @@ function checkScenes(scenes: LessonScene[], label: string) {
 }
 checkScenes(demoLesson.scenes, "演示课程");
 checkScenes(previewLesson.scenes, "预览课程");
+// 精选课程（静态 JSON）：每一页都合格，id 以 f- 开头，已标记为精选，依据是校园资料
+for (const lesson of featuredLessons) {
+  checkScenes(lesson.scenes, `精选课程 ${lesson.id}`);
+  assert.match(lesson.id, LESSON_ID);
+  assert.ok(lesson.id.startsWith("f-") && lesson.featured === true && lesson.status === "ready", `${lesson.id} 的标记不对`);
+  assert.ok(lesson.scenes.length >= 4 && lesson.scenes.every((scene) => scene.status === "ready" && scene.content), `${lesson.id} 有页面没生成好`);
+  assert.ok(lesson.grounding === "campus" && lesson.sources.length > 0, `${lesson.id} 应当以校园资料为依据`);
+}
+assert.equal(new Set(featuredLessons.map((lesson) => lesson.id)).size, featuredLessons.length, "精选课程 id 不能重复");
 assert.ok(LESSON_ID.test(demoLesson.id), "演示课程 id 要符合课程 id 格式");
 assert.deepEqual(demoLesson.scenes.map((item) => item.kind), ["slide", "slide", "quiz", "flashcards", "slide", "summary"]);
 assert.ok(demoLesson.scenes.every((item) => item.status === "ready" && item.content), "演示课程的每一页都是 ready");

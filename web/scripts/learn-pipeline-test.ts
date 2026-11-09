@@ -340,6 +340,17 @@ async function main() {
       await generate.runLessonGeneration(blank.lesson.id, { owner: blank.owner, images, deps: { model, search: noSearch, readImages: async () => "  " } });
       assert.equal(store.getLesson(blank.lesson.id)!.error, "没能从图片里读出文字，换一张清晰的照片试试");
 
+      // 风景照、空白页：模型说「无文字」或简短描述，都当作读不出文字，不继续生成
+      for (const noText of ["无文字", "（图片中没有可读的文字）", "没有文字。", "abc", "1 2 3"]) {
+        const scenery = newLesson({ hasImages: true });
+        const before = calls.length;
+        await generate.runLessonGeneration(scenery.lesson.id, { owner: scenery.owner, images, deps: { model, search: noSearch, readImages: async () => noText } });
+        assert.equal(store.getLesson(scenery.lesson.id)!.error, "没能从图片里读出文字，换一张清晰的照片试试", `「${noText}」应判为没有文字`);
+        assert.equal(calls.length, before, "没有文字就不再调用模型生成课程");
+      }
+      assert.ok(generate.hasReadableText("第一章 极限\n函数极限的定义与性质"), "正常的资料文字要通过");
+      assert.ok(generate.hasReadableText("Python lists are ordered collections."), "英文资料也要通过");
+
       const broken = newLesson({ hasImages: true });
       const silent = console.error;
       console.error = () => {};
