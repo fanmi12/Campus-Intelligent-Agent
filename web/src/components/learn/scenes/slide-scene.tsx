@@ -1,15 +1,13 @@
 "use client";
 
 import { Lightbulb } from "lucide-react";
-import { useEffect, useRef } from "react";
-import { toast } from "sonner";
+import { useEffect } from "react";
 import type { Lesson, LessonScene, SlideContent } from "@/lib/learn/schema";
 import { FigureList } from "../figure";
 import styles from "../learn.module.css";
 import { NarrationBar } from "../narration-bar";
 import { BasisLine, RichText, SourceBadges } from "../source-badges";
-import { updatePrefs, usePrefs } from "../learn-storage";
-import { requestAutoStart, useNarration } from "../use-narration";
+import { useSceneNarration } from "../use-scene-narration";
 import { SceneHeader } from "./scene-header";
 
 export function SlideTable({ table }: { table: NonNullable<SlideContent["table"]> }) {
@@ -43,25 +41,7 @@ export function SlideTable({ table }: { table: NonNullable<SlideContent["table"]
 
 export function SlideScene({ scene, lesson, hasNext, onNext }: { scene: Extract<LessonScene, { kind: "slide" }>; lesson: Lesson; hasNext: boolean; onNext: () => void }) {
   const content = scene.content!;
-  const prefs = usePrefs();
-  // 播完自动翻页（偏好，默认关）：停 1.5 秒再翻，下一页自动开始播放
-  const advance = useRef<ReturnType<typeof setTimeout>>(undefined);
-  useEffect(() => () => clearTimeout(advance.current), []);
-  const narration = useNarration(content.narration, {
-    rate: prefs.rate,
-    voice: prefs.voice,
-    onFinish: () => {
-      if (!prefs.autoAdvance || !hasNext) return;
-      advance.current = setTimeout(() => {
-        requestAutoStart();
-        onNext();
-      }, 1500);
-    },
-    onFallback: () => {
-      toast.info("当前浏览器不支持朗读，已切换为字幕模式");
-      updatePrefs({ voice: "captions" });
-    },
-  });
+  const narration = useSceneNarration(content.narration, { hasNext, onNext });
   const started = narration.index >= 0;
   const active = narration.activePoint;
 
@@ -106,11 +86,7 @@ export function SlideScene({ scene, lesson, hasNext, onNext }: { scene: Extract<
             </li>
           ))}
         </ol>
-        {content.figures && content.figures.length > 0 && (
-          <div className="flex flex-col gap-3">
-            <FigureList figures={content.figures} />
-          </div>
-        )}
+        {content.figures && content.figures.length > 0 && <FigureList figures={content.figures} />}
         {content.layout !== "compare" && table}
         {content.example && (
           <aside className={styles.example}>

@@ -1,56 +1,31 @@
 "use client";
 
 import { useEffect } from "react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { scoreOf } from "@/lib/learn/progress";
 import type { Lesson, LessonScene } from "@/lib/learn/schema";
 import { KnowledgeMap } from "../knowledge-map";
-import { sendLearnEvent } from "../learn-events";
-import { updatePrefs, updateProgress, upsertLocalLesson, usePrefs, useProgress } from "../learn-storage";
 import styles from "../learn.module.css";
 import { LessonReport } from "../lesson-report";
 import { NarrationBar } from "../narration-bar";
 import { BasisLine, RichText } from "../source-badges";
-import { useNarration } from "../use-narration";
+import { useFinishLesson } from "../use-finish-lesson";
+import { useSceneNarration } from "../use-scene-narration";
 import { SceneHeader } from "./scene-header";
 
 type SummaryScene = Extract<LessonScene, { kind: "summary" }>;
 
 export function SummaryScene({ scene, lesson }: { scene: SummaryScene; lesson: Lesson }) {
   const content = scene.content!;
-  const progress = useProgress(lesson.id);
-  const prefs = usePrefs();
-  const narration = useNarration(content.narration, {
-    rate: prefs.rate,
-    voice: prefs.voice,
-    onFallback: () => {
-      toast.info("当前浏览器不支持朗读，已切换为字幕模式");
-      updatePrefs({ voice: "captions" });
-    },
-  });
+  const narration = useSceneNarration(content.narration);
   const started = narration.index >= 0;
   const active = narration.activePoint;
-  const finished = progress.finishedAt !== undefined;
+  const { finished, finish } = useFinishLesson(lesson, scene.id);
 
   useEffect(() => {
     if (narration.playing && active >= 0) {
       document.getElementById(`recap-${scene.id}-${active}`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     }
   }, [narration.playing, active, scene.id]);
-
-  function finish() {
-    const score = scoreOf(lesson, progress);
-    const now = Date.now();
-    updateProgress(lesson.id, (current) => ({
-      ...current,
-      finishedAt: now,
-      score: score ?? undefined,
-      completed: current.completed.includes(scene.id) ? current.completed : [...current.completed, scene.id],
-    }));
-    upsertLocalLesson({ id: lesson.id, completedAt: now, score: score ?? undefined });
-    sendLearnEvent({ lessonId: lesson.id, type: "finish", value: score ?? undefined });
-  }
 
   return (
     <>

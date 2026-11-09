@@ -1,0 +1,94 @@
+/* 放映模式：1280×720 的舞台，缩放后放进视口。舞台里的尺寸全部用 em，字号由 .scene 控制，
+   内容放不下时脚本会把字号从 22px 一点点调小（见 fit.ts）。颜色只用主题里已有的语义变量，深浅色都能用。 */
+
+.root { display: flex; min-height: 0; flex: 1; flex-direction: column; }
+.viewport { position: relative; min-height: 0; flex: 1; overflow: hidden; }
+.canvas { position: absolute; left: 50%; top: 50%; width: 1280px; height: 720px; margin: -360px 0 0 -640px; overflow: hidden; border: 1px solid var(--border); border-radius: 20px; background: var(--background); box-shadow: 0 24px 60px -30px color-mix(in oklch, var(--foreground) 35%, transparent); transform-origin: center center; }
+.tip { position: absolute; top: 8px; right: 14px; z-index: 2; border: 1px solid var(--border); border-radius: 999px; background: color-mix(in oklch, var(--card) 88%, transparent); padding: 3px 11px; font-size: 12px; color: var(--muted-foreground); pointer-events: none; }
+
+/* ---------- 一页 ---------- */
+.scene { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 32px 56px 26px; color: var(--foreground); font-size: 22px; }
+.head { display: flex; align-items: center; gap: 14px; }
+.tag { display: inline-flex; align-items: center; border-radius: 8px; background: var(--accent); padding: 4px 14px; font-size: 0.62em; font-weight: 800; letter-spacing: 1px; color: var(--accent-foreground); white-space: nowrap; }
+.title { margin: 0; font-size: 40px; font-weight: 700; line-height: 1.2; letter-spacing: -0.5px; outline: none; overflow-wrap: anywhere; }
+.lead { margin: 10px 0 14px; font-size: 25px; line-height: 1.5; color: color-mix(in oklch, var(--foreground) 82%, transparent); }
+.cols { display: grid; min-height: 0; flex: 1; grid-template-columns: 1.2fr 0.95fr; gap: 28px; }
+
+/* 要点：逐条出现，讲到哪条哪条高亮 */
+.points { display: grid; min-height: 0; align-content: start; gap: 10px; margin: 0; padding: 0; overflow: auto; list-style: none; }
+.point { display: flex; gap: 12px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); padding: 11px 16px; transition: opacity 250ms, transform 250ms, background-color 200ms, border-color 200ms; }
+.point[data-show="false"] { opacity: 0; transform: translateY(10px); pointer-events: none; }
+.point[data-active="true"] { border-color: var(--primary); background: var(--accent); }
+.point[data-dim="true"] { opacity: 0.5; }
+.pn { display: grid; width: 1.5em; height: 1.5em; flex: none; margin-top: 0.15em; place-items: center; border-radius: 50%; background: color-mix(in oklch, var(--primary) 12%, transparent); color: var(--primary); font-size: 0.8em; font-weight: 800; }
+.pointBody { min-width: 0; flex: 1; }
+.pointBody h3 { margin: 0 0 4px; font-size: 1.06em; font-weight: 700; line-height: 1.4; }
+.pointBody p { margin: 0; font-size: 0.9em; line-height: 1.5; color: color-mix(in oklch, var(--foreground) 85%, transparent); overflow-wrap: anywhere; }
+
+/* 右栏：图像 / 例题与表格，讲到第 2 条要点时淡入 */
+.side { display: flex; min-height: 0; flex-direction: column; gap: 16px; overflow: auto; transition: opacity 300ms; }
+.side[data-show="false"] { opacity: 0; }
+.tabs { display: flex; gap: 8px; margin-bottom: 10px; }
+.tab { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 999px; background: var(--card); padding: 6px 14px; font-size: 0.74em; font-weight: 700; transition: background-color 150ms, border-color 150ms; }
+.tab:hover { background: var(--muted); }
+.tab[aria-selected="true"] { border-color: var(--primary); background: var(--accent); color: var(--accent-foreground); }
+.tab:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.pane { min-width: 0; }
+.pfig { display: flex; min-height: 0; flex: 1; flex-direction: column; }
+.side[data-tab="fig"] .pex { display: none; }
+.side[data-tab="ex"] .pfig { display: none; }
+.pex { display: flex; flex-direction: column; gap: 16px; }
+.ex { border: 1px solid color-mix(in oklch, var(--gold) 35%, var(--border)); border-radius: 16px; background: color-mix(in oklch, var(--gold) 12%, var(--card)); padding: 16px 18px; }
+.exh { margin-bottom: 6px; font-weight: 800; color: color-mix(in oklch, var(--gold) 55%, var(--foreground)); }
+.exb { font-size: 0.88em; line-height: 1.65; overflow-wrap: anywhere; }
+.tbl { overflow: auto; border: 1px solid var(--border); border-radius: 14px; background: var(--card); }
+.tbl table { width: 100%; border-collapse: collapse; font-size: 0.84em; }
+.tbl th { background: var(--muted); padding: 9px 12px; text-align: left; font-weight: 800; }
+.tbl td { border-top: 1px solid var(--border); padding: 9px 12px; vertical-align: top; }
+
+/* 多图对比页：要点收成两列放上面，图像占满整行放大 */
+.cols[data-wide="true"] { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); gap: 12px; }
+.cols[data-wide="true"] .points { grid-template-columns: 1fr 1fr; gap: 6px; overflow: visible; }
+.cols[data-wide="true"] .point { gap: 10px; border-radius: 14px; padding: 6px 12px; }
+.cols[data-wide="true"] .pointBody h3 { margin-bottom: 2px; font-size: 0.95em; }
+.cols[data-wide="true"] .pointBody p { font-size: 0.76em; line-height: 1.42; }
+.cols[data-wide="true"] .side { gap: 8px; overflow: hidden; }
+.cols[data-wide="true"] .side[data-tab="ex"] { overflow: auto; }
+.cols[data-wide="true"] .tabs { margin-bottom: 4px; }
+
+/* ---------- 总结页 ---------- */
+.sumcols { display: grid; min-height: 0; flex: 1; grid-template-columns: 1.1fr 0.9fr; align-content: start; gap: 26px; margin-top: 14px; overflow: auto; }
+.recap { display: grid; align-content: start; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.recap li { display: flex; gap: 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--card); padding: 11px 14px; font-size: 0.94em; line-height: 1.5; transition: opacity 250ms, background-color 200ms, border-color 200ms; }
+.recap li[data-dim="true"] { opacity: 0.5; }
+.recap li[data-active="true"] { border-color: var(--primary); background: var(--accent); }
+.recapNo { display: grid; width: 1.6em; height: 1.6em; flex: none; margin-top: 0.1em; place-items: center; border-radius: 50%; background: var(--primary); color: var(--primary-foreground); font-size: 0.8em; font-weight: 800; }
+.sumright { display: flex; min-width: 0; flex-direction: column; gap: 12px; font-size: 0.78em; }
+.map { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin: 0; padding: 0; list-style: none; }
+.node { border: 1px solid var(--border); border-radius: 14px; background: var(--card); padding: 10px 12px; font-size: 0.86em; }
+.nodeLabel { margin: 0 0 5px; font-weight: 800; color: var(--primary); }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.chip { border-radius: 999px; background: var(--muted); padding: 2px 8px; font-size: 0.9em; }
+.next { border: 1px solid color-mix(in oklch, var(--success) 30%, var(--border)); border-radius: 14px; background: color-mix(in oklch, var(--success) 9%, var(--card)); padding: 12px 16px; font-size: 0.9em; line-height: 1.6; }
+.nextTitle { display: block; margin-bottom: 4px; font-weight: 800; }
+.next ul { margin: 0; padding-left: 1.1em; }
+
+/* ---------- 测验、闪卡、讨论：沿用手机上的单列页面，放大一点放在舞台区 ---------- */
+.generic { min-height: 0; flex: 1; overflow-y: auto; }
+.genericInner { display: flex; min-height: 100%; width: 100%; max-width: 760px; flex-direction: column; margin: 0 auto; padding: 20px 16px; zoom: 1.12; }
+@media (min-width: 1400px) { .genericInner { zoom: 1.28; } }
+
+/* ---------- 底部：字幕 + 控制 ---------- */
+.dock { flex: none; border-top: 1px solid color-mix(in oklch, var(--border) 70%, transparent); background: color-mix(in oklch, var(--background) 92%, transparent); padding: 8px 16px calc(8px + env(safe-area-inset-bottom)); backdrop-filter: blur(10px); }
+.dockInner { display: grid; width: 100%; max-width: 1180px; gap: 6px; margin: 0 auto; }
+.caption { display: flex; min-height: 3.2em; align-items: flex-start; gap: 12px; }
+.captionText { min-width: 0; max-height: 6.6em; flex: 1; margin: 0; overflow: auto; font-size: 15px; line-height: 1.6; }
+.captionHint { color: var(--muted-foreground); }
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.spacer { flex: 1; }
+.counter { font-size: 12.5px; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.hint { margin: 0; font-size: 12px; color: var(--muted-foreground); }
+
+@media (prefers-reduced-motion: reduce) {
+  .point, .side, .recap li, .tab { transition: none; }
+}

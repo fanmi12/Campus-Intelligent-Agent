@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, CircleAlert, FlaskConical, LoaderCircle, MessageCircleQuestion, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, CircleAlert, FlaskConical, LoaderCircle, MessageCircleQuestion, MonitorPlay, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -12,34 +12,19 @@ import { AskTeacher } from "./ask-teacher";
 import { GeneratingState } from "./generating-state";
 import { sendLearnEvent } from "./learn-events";
 import { LearnHeader } from "./learn-header";
-import { updateProgress, useProgress } from "./learn-storage";
+import { updatePrefs, updateProgress, useProgress } from "./learn-storage";
 import styles from "./learn.module.css";
 import { LessonMenu } from "./lesson-menu";
 import { SceneNav } from "./scene-nav";
-import { DiscussionScene } from "./scenes/discussion-scene";
-import { FlashcardsScene } from "./scenes/flashcards-scene";
-import { QuizScene } from "./scenes/quiz-scene";
-import { SlideScene } from "./scenes/slide-scene";
-import { SummaryScene } from "./scenes/summary-scene";
-import { SourceProvider } from "./source-badges";
+import { SceneView } from "./scene-view";
 import { KIND_LABEL } from "./scene-meta";
+import { SourceProvider } from "./source-badges";
+import { StageScene } from "./stage/stage-scene";
+import { useStageMode } from "./stage/use-stage-mode";
 import { useLesson } from "./use-lesson";
 
-// 一页的实际内容（页面已生成好才会渲染）
-export function SceneView({ scene, lesson, hasNext, onNext }: { scene: LessonScene; lesson: Lesson; hasNext: boolean; onNext: () => void }) {
-  switch (scene.kind) {
-    case "slide":
-      return <SlideScene scene={scene} lesson={lesson} hasNext={hasNext} onNext={onNext} />;
-    case "quiz":
-      return <QuizScene scene={scene} lesson={lesson} hasNext={hasNext} onNext={onNext} />;
-    case "flashcards":
-      return <FlashcardsScene scene={scene} lesson={lesson} />;
-    case "discussion":
-      return <DiscussionScene scene={scene} lesson={lesson} />;
-    case "summary":
-      return <SummaryScene scene={scene} lesson={lesson} />;
-  }
-}
+// 预览页等地方从这里引用
+export { SceneView };
 
 // 还没生成好或生成失败的页：显示大纲里的标题和要点，失败的可以重新生成
 export function ScenePlaceholder({ scene, index, total, owner, retrying, onRetry }: { scene: LessonScene; index: number; total: number; owner: boolean; retrying: boolean; onRetry: () => void }) {
@@ -131,6 +116,7 @@ function isTyping(target: EventTarget | null): boolean {
 export function Classroom({ initialLesson }: { initialLesson: Lesson }) {
   const { lesson, owner, queuePosition, offline, missing, restart, patch } = useLesson(initialLesson);
   const progress = useProgress(lesson.id);
+  const stageMode = useStageMode();
   const [retrying, setRetrying] = useState(false);
   const [askOpen, setAskOpen] = useState(false);
   const main = useRef<HTMLElement>(null);
@@ -237,6 +223,8 @@ export function Classroom({ initialLesson }: { initialLesson: Lesson }) {
 
   const hasFailed = lesson.status === "failed" || scenes.some((item) => item.status === "failed");
   const generating = lesson.status === "generating";
+  // 放映模式：屏幕够宽、用户没关掉、而且这一页已经生成好。没生成好的页、失败页仍然用单列页面
+  const stageOn = Boolean(stageMode?.active && !missing && scene && scene.status === "ready" && scene.content);
 
   let body: React.ReactNode;
   if (missing) {
@@ -264,7 +252,20 @@ export function Classroom({ initialLesson }: { initialLesson: Lesson }) {
           subtitle={scenes.length ? `第 ${current + 1}/${scenes.length} 页 · 约 ${lesson.minutes} 分钟` : "小狮课堂"}
           backHref="/learn"
           backLabel="返回小狮课堂"
+          wide={stageOn}
         >
+          {stageMode?.available && (
+            <Button
+              variant={stageMode.active ? "secondary" : "ghost"}
+              size="icon"
+              aria-label="放映模式"
+              aria-pressed={stageMode.active}
+              title={stageMode.active ? "放映模式：已开启（点击改回普通页面）" : "放映模式：把课堂铺成 16:9 的舞台"}
+              onClick={() => updatePrefs({ stage: stageMode.active ? "off" : "auto" })}
+            >
+              <MonitorPlay />
+            </Button>
+          )}
           <Button variant="ghost" size="icon" aria-label="问狮老师" title="问狮老师" disabled={!scene || scene.status !== "ready"} onClick={() => setAskOpen(true)}>
             <MessageCircleQuestion />
           </Button>
@@ -287,11 +288,23 @@ export function Classroom({ initialLesson }: { initialLesson: Lesson }) {
 
         {scenes.length > 0 && !missing && <SceneNav scenes={scenes} current={current} completed={progress.completed} onSelect={goTo} />}
 
-        <main ref={main} className="min-h-0 flex-1 overflow-y-auto">
-          <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col px-4 pt-4 pb-4">{body}</div>
-        </main>
+        {stageOn && scene ? (
+          <main ref={main} className="flex min-h-0 flex-1 flex-col">
+            <StageScene
+              key={scene.id}
+              scene={scene}
+              lesson={lesson}
+              page={{ index: current, total: scenes.length, hasPrev: current > 0, hasNext: current + 1 < scenes.length, onPrev: () => goTo(current - 1), onNext: () => goTo(current + 1) }}
+            />
+          </main>
+        ) : (
+          // 还不知道屏幕多宽时（服务端渲染、刚水合）先不显示，免得先画一遍手机布局再跳成舞台
+          <main ref={main} className="min-h-0 flex-1 overflow-y-auto" style={stageMode === null ? { visibility: "hidden" } : undefined}>
+            <div className="mx-auto flex min-h-full w-full max-w-2xl flex-col px-4 pt-4 pb-4">{body}</div>
+          </main>
+        )}
 
-        {scenes.length > 0 && !missing && (
+        {scenes.length > 0 && !missing && !stageOn && (
           <footer className="shrink-0 border-t border-border/60 bg-background/90 backdrop-blur-md">
             <div className="pb-safe mx-auto flex w-full max-w-2xl items-center gap-2 px-4 pt-2.5">
               <Button variant="outline" onClick={() => goTo(current - 1)} disabled={current === 0}>

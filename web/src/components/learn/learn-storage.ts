@@ -171,16 +171,18 @@ export function updateProgress(id: string, change: (progress: LessonProgress) =>
 export const resetProgress = (id: string) => removeRaw(PROGRESS_KEY(id));
 
 // ---------- 偏好 ----------
-export type Prefs = { rate: 0.9 | 1 | 1.2; voice: "auto" | "captions"; autoAdvance: boolean };
-const defaultPrefs: Prefs = { rate: 1, voice: "auto", autoAdvance: false };
+// stage：放映模式。auto 表示屏幕够宽（电脑、平板横屏）就用放映舞台，off 是用户主动关掉
+export type Prefs = { rate: 0.9 | 1 | 1.2; voice: "auto" | "captions"; autoAdvance: boolean; stage: "auto" | "off" };
+const defaultPrefs: Prefs = { rate: 1, voice: "auto", autoAdvance: false, stage: "auto" };
 
 function parsePrefs(value: unknown): Prefs {
   if (!isRecord(value)) return defaultPrefs;
   const rate = value.rate === 0.9 || value.rate === 1.2 ? value.rate : 1;
   const voice = value.voice === "captions" ? "captions" : "auto";
   const autoAdvance = value.autoAdvance === true;
-  if (rate === 1 && voice === "auto" && !autoAdvance) return defaultPrefs;
-  return { rate, voice, autoAdvance };
+  const stage = value.stage === "off" ? "off" : "auto";
+  if (rate === 1 && voice === "auto" && !autoAdvance && stage === "auto") return defaultPrefs;
+  return { rate, voice, autoAdvance, stage };
 }
 
 export const readPrefs = () => readJson(PREFS_KEY, parsePrefs);

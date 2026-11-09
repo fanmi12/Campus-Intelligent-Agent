@@ -11,17 +11,20 @@ export function LearnHeader({
   subtitle,
   backHref,
   backLabel,
+  wide = false,
   children,
 }: {
   title: string;
   subtitle?: string;
   backHref: string;
   backLabel: string;
+  // 放映模式下顶栏随舞台一起变宽
+  wide?: boolean;
   children?: ReactNode;
 }) {
   return (
     <header className="z-20 shrink-0 border-b border-border/60 bg-background/75 backdrop-blur-md">
-      <div className="mx-auto flex h-14 w-full max-w-2xl items-center gap-2 px-3">
+      <div className={`mx-auto flex h-14 w-full items-center gap-2 px-3 ${wide ? "max-w-6xl" : "max-w-2xl"}`}>
         <Link href={backHref} aria-label={backLabel} className={buttonVariants({ variant: "ghost", size: "icon" })}>
           <ArrowLeft />
         </Link>
