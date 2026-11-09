@@ -1,3 +1,4 @@
+import { stripMath } from "./math/rich";
 import type { LessonScene, QuizQuestion } from "./schema";
 
 // 页面内容 ↔ 纯文本：给「问狮老师」当上下文，以及朗读、导出笔记前的清理
@@ -61,9 +62,9 @@ function labelOf(kind: LessonScene["kind"]): string {
 // 只能配合 replace / matchAll / split 使用（带 g 标志）
 export const CITATION = /(?<![A-Za-z0-9_)](?:\[\d{1,2}\])*)\[(\d{1,2})\]/g;
 
-// 朗读前清理：去掉 [n] 角标、emoji 和 Markdown 符号，箭头读成停顿
+// 朗读前清理：公式换成纯文本，去掉 [n] 角标、emoji 和 Markdown 符号，箭头读成停顿
 export function speakable(text: string): string {
-  return text
+  return stripMath(text)
     .replace(CITATION, "")
     .replace(/\p{Extended_Pictographic}/gu, "")
     .replace(/\s*[→➜➡]\s*|\s*->\s*/g, "，")

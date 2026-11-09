@@ -4,6 +4,7 @@ import { Lightbulb } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import type { Lesson, LessonScene, SlideContent } from "@/lib/learn/schema";
+import { FigureList } from "../figure";
 import styles from "../learn.module.css";
 import { NarrationBar } from "../narration-bar";
 import { BasisLine, RichText, SourceBadges } from "../source-badges";
@@ -19,7 +20,7 @@ export function SlideTable({ table }: { table: NonNullable<SlideContent["table"]
           <tr>
             {table.columns.map((column, index) => (
               <th key={index} scope="col">
-                {column}
+                <RichText text={column} />
               </th>
             ))}
           </tr>
@@ -95,7 +96,7 @@ export function SlideScene({ scene, lesson, hasNext, onNext }: { scene: Extract<
               </span>
               <div className="min-w-0 flex-1">
                 <h3 className={styles.pointHeading}>
-                  {point.heading}
+                  <RichText text={point.heading} />
                   <SourceBadges numbers={point.sourceNumbers} />
                 </h3>
                 <p className={styles.pointBody}>
@@ -105,12 +106,19 @@ export function SlideScene({ scene, lesson, hasNext, onNext }: { scene: Extract<
             </li>
           ))}
         </ol>
+        {content.figures && content.figures.length > 0 && (
+          <div className="flex flex-col gap-3">
+            <FigureList figures={content.figures} />
+          </div>
+        )}
         {content.layout !== "compare" && table}
         {content.example && (
           <aside className={styles.example}>
             <Lightbulb className="mt-0.5 size-4 shrink-0 text-warning" />
             <div className="min-w-0">
-              <strong>{content.example.title}</strong>
+              <strong>
+                <RichText text={content.example.title} />
+              </strong>
               <p>
                 <RichText text={content.example.body} />
               </p>

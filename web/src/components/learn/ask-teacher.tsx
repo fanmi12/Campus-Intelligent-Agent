@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { Markdown } from "@/components/chat/markdown";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { stripMath } from "@/lib/learn/math/rich";
 import type { Lesson, LessonScene } from "@/lib/learn/schema";
 import { AgentAvatar } from "./agent-avatar";
 import { ChatInput } from "./chat-input";
@@ -33,7 +34,7 @@ export function AskTeacher({ lesson, scene, open, onOpenChange }: { lesson: Less
       <SheetContent side="bottom" className="mx-auto flex h-[82dvh] w-full max-w-2xl flex-col gap-0 rounded-t-3xl p-0">
         <SheetHeader className="shrink-0 gap-0.5 border-b px-4 py-3 pr-14">
           <SheetTitle className="text-base">问狮老师</SheetTitle>
-          <SheetDescription className="truncate text-xs">就「{scene.title}」这一页提问；回答里的数字角标可以点开看出处</SheetDescription>
+          <SheetDescription className="truncate text-xs">就「{stripMath(scene.title)}」这一页提问；回答里的数字角标可以点开看出处</SheetDescription>
         </SheetHeader>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">

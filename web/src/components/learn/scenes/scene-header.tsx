@@ -1,6 +1,7 @@
 import type { SceneKind } from "@/lib/learn/schema";
 import styles from "../learn.module.css";
 import { KIND_ICON, KIND_LABEL } from "../scene-meta";
+import { RichText } from "../source-badges";
 
 // 每一页顶部的「类型 · 标题」。标题可以接收焦点：切页后课堂页会把焦点移到这里，读屏软件和键盘用户从标题开始读
 export function SceneHeader({ kind, title }: { kind: SceneKind; title: string }) {
@@ -12,7 +13,7 @@ export function SceneHeader({ kind, title }: { kind: SceneKind; title: string })
         {KIND_LABEL[kind]}
       </span>
       <h2 id="scene-title" tabIndex={-1} className={styles.sceneTitle}>
-        {title}
+        <RichText text={title} />
       </h2>
     </header>
   );

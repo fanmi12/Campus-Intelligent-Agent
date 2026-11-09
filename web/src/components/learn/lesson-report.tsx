@@ -13,6 +13,7 @@ import { exportNotes } from "./export";
 import { formatDuration } from "./format";
 import { addReviewCards, resetProgress, useProgress, useReviewCards } from "./learn-storage";
 import styles from "./learn.module.css";
+import { RichText } from "./source-badges";
 
 function verdict(score: number | undefined): string {
   if (score === undefined) return "学完这节课，很棒！";
@@ -74,7 +75,7 @@ export function LessonReport({ lesson }: { lesson: Lesson }) {
           <div className="mt-2 flex flex-wrap gap-1.5">
             {weak.map((point) => (
               <span key={point} className={styles.mapChip}>
-                {point}
+                <RichText text={point} />
               </span>
             ))}
           </div>
@@ -92,8 +93,11 @@ export function LessonReport({ lesson }: { lesson: Lesson }) {
                 <li key={`${item.sceneId}:${item.index}`} className="flex items-start gap-2 text-[14.5px] leading-6">
                   <Icon className={`mt-1 size-4 shrink-0 ${tone}`} aria-label={item.score >= 0.8 ? "答对" : item.score >= 0.4 ? "部分对" : item.answer ? "没答对" : "没作答"} />
                   <span className="min-w-0 flex-1">
-                    {item.question.prompt}
-                    <span className={`${styles.muted} block`}>考查：{item.question.point}</span>
+                    <RichText text={item.question.prompt} />
+                    <span className={`${styles.muted} block`}>
+                      考查：
+                      <RichText text={item.question.point} />
+                    </span>
                   </span>
                 </li>
               );

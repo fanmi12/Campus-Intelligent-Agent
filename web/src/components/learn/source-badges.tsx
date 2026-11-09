@@ -4,9 +4,11 @@ import { BookOpen, NotebookPen, School } from "lucide-react";
 import { createContext, Fragment, useContext, useMemo, useState, type ReactNode } from "react";
 import { SourceSheet } from "@/components/chat/sources";
 import type { SourceItem } from "@/lib/ai/types";
+import { parseRich } from "@/lib/learn/math/rich";
 import type { Grounding, LessonSource } from "@/lib/learn/schema";
 import { CITATION } from "@/lib/learn/scene-text";
 import styles from "./learn.module.css";
+import { Formula, MatrixView } from "./math";
 
 // 课程里的出处：要点旁、闪卡、总结里的 [n] 角标，点开用聊天里同一个出处面板显示原文片段
 
@@ -71,8 +73,8 @@ export function SourceBadges({ numbers }: { numbers: number[] }) {
   );
 }
 
-// 文字里的 [n] 换成可点击的角标；编号对不上资料的保持原样
-export function RichText({ text }: { text: string }) {
+// 一段不含公式的文字里的 [n] 换成可点击的角标；编号对不上资料的保持原样
+function Citations({ text }: { text: string }) {
   const { sources } = useContext(SourceContext);
   if (!sources.length) return <>{text}</>;
   const parts = text.split(CITATION);
@@ -82,6 +84,22 @@ export function RichText({ text }: { text: string }) {
         if (index % 2 === 0) return <Fragment key={index}>{part}</Fragment>;
         const n = Number(part);
         return sources.some((source) => source.n === n) ? <SourceBadge key={index} n={n} /> : <Fragment key={index}>{`[${part}]`}</Fragment>;
+      })}
+    </>
+  );
+}
+
+// 课程里的文字一律用它显示：$…$ 渲染成公式，[[1,2],[3,4]] 排成矩阵，其余文字里的 [n] 换成可点击的出处角标
+export function RichText({ text }: { text: string }) {
+  const { sources } = useContext(SourceContext);
+  const parts = useMemo(() => parseRich(text), [text]);
+  if (parts.length === 1 && parts[0].type === "text" && !sources.length) return <>{parts[0].text}</>;
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (part.type === "math") return <Formula key={index} tex={part.tex} />;
+        if (part.type === "matrix") return <MatrixView key={index} matrix={part.matrix} source={part.source} />;
+        return <Citations key={index} text={part.text} />;
       })}
     </>
   );

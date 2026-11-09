@@ -1,12 +1,13 @@
 import { z } from "zod";
+import type { Figure } from "./figure";
 
 // 小狮课堂的数据结构，前后端共用（不能 import node: 模块或 lib/server/ 下的文件）。
 // 生成时这些 schema 直接作为强制工具调用的 inputSchema，describe 里的文字就是写给模型看的格式要求。
 // 课程形式参考 OpenMAIC（MIT）的两阶段生成：先出大纲，再逐页生成内容。
 //
 // 约定：每种页面一个扁平 schema（不用 discriminatedUnion / anyOf），DeepSeek 对扁平对象的函数参数最稳；
-// 长度上限比提示词里要求的宽一倍，避免模型稍长一点就校验失败；逻辑约束放在 superRefine，
-// 校验失败会带着错误信息让模型重试一次（见 lib/server/learn/structured.ts）。
+// 长度上限比提示词里要求的宽一倍（含公式的文字按 LaTeX 源码计长，源码比显示出来的长很多），避免模型稍长一点就校验失败；
+// 逻辑约束放在 superRefine，校验失败会带着错误信息让模型重试一次（见 lib/server/learn/structured.ts）。
 
 export const LESSON_VERSION = 1 as const;
 export const LESSON_ID = /^[A-Za-z0-9_-]{6,24}$/;
@@ -70,7 +71,7 @@ export type Outline = z.infer<typeof outlineSchema>;
 // ---------- 第二阶段：各类页面 ----------
 export const slideContentSchema = z
   .object({
-    lead: text(100).describe("一句话导语"),
+    lead: text(160).describe("一句话导语"),
     layout: z
       .enum(["points", "steps", "compare"])
       .describe("points 并列要点；steps 有先后顺序的步骤；compare 对比（配合 table）"),
@@ -78,17 +79,17 @@ export const slideContentSchema = z
       .array(
         z.object({
           heading: text(24).describe("要点小标题，≤12 字"),
-          body: text(140).describe("一句话说明，≤60 字"),
+          body: text(220).describe("一句话说明，≤60 字"),
           sourceNumbers: sourceNumbers.describe("依据的参考资料编号；没用到资料填 []"),
         }),
       )
       .min(2)
       .max(5),
-    example: z.object({ title: text(24), body: text(260) }).optional().describe("可选：贴近大学生活的例子或易错提醒"),
+    example: z.object({ title: text(40), body: text(420) }).optional().describe("可选：贴近大学生活的例子或易错提醒"),
     table: z
       .object({
         columns: z.array(text(16)).min(2).max(4),
-        rows: z.array(z.array(text(40)).min(2).max(4)).min(1).max(6),
+        rows: z.array(z.array(text(80)).min(2).max(4)).min(1).max(6),
       })
       .optional()
       .describe("可选：对比或列举时使用；每行单元格数必须等于列数"),
@@ -114,20 +115,23 @@ export const slideContentSchema = z
     });
   });
 export type SlideContent = z.infer<typeof slideContentSchema>;
+// 讲解页存下来的内容 = 生成时的内容 + 可选的图像。生成讲解页的工具 schema（slideContentSchema）不含 figures，
+// 免得模型一次要交的结构太复杂；图像是精选课程手工配的，或由单独的一次调用补上（见 lib/server/learn/）
+export type StoredSlideContent = SlideContent & { figures?: Figure[] };
 
 export const quizQuestionSchema = z
   .object({
     type: z.enum(["single", "multiple", "short"]).describe("single 单选；multiple 多选；short 简答"),
-    prompt: text(140).describe("题干"),
-    options: z.array(text(60)).max(5).default([]).describe("单选 3-4 个、多选 4-5 个选项；简答填 []"),
+    prompt: text(220).describe("题干"),
+    options: z.array(text(100)).max(5).default([]).describe("单选 3-4 个、多选 4-5 个选项；简答填 []"),
     answers: z
       .array(z.number().int().min(0).max(4))
       .max(4)
       .default([])
       .describe("正确选项下标（从 0 开始）：单选 1 个，多选 2-4 个；简答填 []"),
     reference: z.string().trim().max(300).default("").describe("简答题参考答案（50-150 字）；选择题填空字符串"),
-    rubric: z.array(text(60)).max(4).default([]).describe("简答题得分点 1-4 条；选择题填 []"),
-    explanation: text(200).describe("解析：为什么对、错在哪"),
+    rubric: z.array(text(100)).max(4).default([]).describe("简答题得分点 1-4 条；选择题填 []"),
+    explanation: text(320).describe("解析：为什么对、错在哪"),
     point: text(24).describe("考查的知识点名称，≤12 字"),
   })
   .superRefine((question, ctx) => {
@@ -167,8 +171,8 @@ export const flashcardsContentSchema = z.object({
   cards: z
     .array(
       z.object({
-        front: text(40).describe("要记住的术语、规定或问题，≤20 字"),
-        back: text(160).describe("简明解释或答案，≤80 字"),
+        front: text(80).describe("要记住的术语、规定或问题，≤20 字"),
+        back: text(240).describe("简明解释或答案，≤80 字"),
         hint: z.string().trim().max(60).optional().describe("可选：记忆提示"),
       }),
     )
@@ -178,10 +182,10 @@ export const flashcardsContentSchema = z.object({
 export type FlashcardsContent = z.infer<typeof flashcardsContentSchema>;
 
 export const discussionContentSchema = z.object({
-  question: text(100).describe("抛给学习者的开放问题，≤50 字，不是是非题"),
-  context: text(200).describe("讨论背景，一两句"),
+  question: text(160).describe("抛给学习者的开放问题，≤50 字，不是是非题"),
+  context: text(300).describe("讨论背景，一两句"),
   opening: z
-    .array(z.object({ agent: agentIdSchema, text: text(120) }))
+    .array(z.object({ agent: agentIdSchema, text: text(180) }))
     .min(2)
     .max(4)
     .describe("开场：先由 xiaolin 或 xiaomei 说观点或疑问，最后一句由 teacher 邀请学习者发言"),
@@ -189,13 +193,13 @@ export const discussionContentSchema = z.object({
 export type DiscussionContent = z.infer<typeof discussionContentSchema>;
 
 export const summaryContentSchema = z.object({
-  recap: z.array(text(60)).min(3).max(6).describe("整节课最重要的结论"),
+  recap: z.array(text(100)).min(3).max(6).describe("整节课最重要的结论"),
   map: z
-    .array(z.object({ label: text(20), children: z.array(text(30)).max(5).default([]) }))
+    .array(z.object({ label: text(40), children: z.array(text(60)).max(5).default([]) }))
     .min(2)
     .max(6)
     .describe("知识结构图：一级节点（通常对应讲解页）及其子节点（关键词）"),
-  nextSteps: z.array(text(60)).min(1).max(3).describe("下一步建议"),
+  nextSteps: z.array(text(100)).min(1).max(3).describe("下一步建议"),
   narration: z
     .array(z.object({ point: z.number().int().min(-1).max(5), text: text(200) }))
     .min(1)
@@ -217,7 +221,7 @@ export const SCENE_TOOLS = {
 export type SceneStatus = "pending" | "generating" | "ready" | "failed";
 type SceneBase = { id: string; title: string; goal: string; keyPoints: string[]; status: SceneStatus; error?: string };
 export type LessonScene =
-  | (SceneBase & { kind: "slide"; content?: SlideContent })
+  | (SceneBase & { kind: "slide"; content?: StoredSlideContent })
   | (SceneBase & { kind: "quiz"; content?: QuizContent })
   | (SceneBase & { kind: "flashcards"; content?: FlashcardsContent })
   | (SceneBase & { kind: "discussion"; content?: DiscussionContent })

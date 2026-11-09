@@ -2,6 +2,7 @@
 
 import { Check, CircleAlert, LoaderCircle } from "lucide-react";
 import { useEffect, useRef } from "react";
+import { stripMath } from "@/lib/learn/math/rich";
 import type { LessonScene } from "@/lib/learn/schema";
 import styles from "./learn.module.css";
 import { KIND_ICON, KIND_LABEL } from "./scene-meta";
@@ -39,7 +40,7 @@ export function SceneNav({
             className={styles.navItem}
             data-state={scene.status}
             aria-current={index === current ? "step" : undefined}
-            aria-label={`第 ${index + 1} 页，${KIND_LABEL[scene.kind]}：${scene.title}${status ? `，${status}` : ""}`}
+            aria-label={`第 ${index + 1} 页，${KIND_LABEL[scene.kind]}：${stripMath(scene.title)}${status ? `，${status}` : ""}`}
             onClick={() => onSelect(index)}
           >
             {scene.status === "generating" || scene.status === "pending" ? (

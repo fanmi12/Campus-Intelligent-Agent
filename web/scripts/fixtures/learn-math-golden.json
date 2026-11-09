@@ -1,0 +1,210 @@
+{
+ "golden": [
+  {
+   "tex": "\\sum_{k=1}^{n} a_k",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><munderover><mo largeop=\"true\" movablelimits=\"true\">∑</mo><mrow><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mrow><mi>n</mi></mrow></munderover><msub><mi>a</mi><mi>k</mi></msub></mrow></math>"
+  },
+  {
+   "tex": "\\int_0^1 x^2 dx",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><msubsup><mo largeop=\"true\">∫</mo><mn>0</mn><mn>1</mn></msubsup><msup><mi>x</mi><mn>2</mn></msup><mi>d</mi><mi>x</mi></mrow></math>"
+  },
+  {
+   "tex": "x^{n-1}",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><msup><mi>x</mi><mrow><mi>n</mi><mo>−</mo><mn>1</mn></mrow></msup></mrow></math>"
+  },
+  {
+   "tex": "\\overline{AB}",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mover><mrow><mi>A</mi><mi>B</mi></mrow><mo>‾</mo></mover></mrow></math>"
+  },
+  {
+   "tex": "\\vec{v}",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mover accent=\"true\"><mrow><mi>v</mi></mrow><mo>→</mo></mover></mrow></math>"
+  },
+  {
+   "tex": "x'' + y'''",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><msup><mi>x</mi><mo>″</mo></msup><mo>+</mo><msup><mi>y</mi><mo>‴</mo></msup></mrow></math>"
+  },
+  {
+   "tex": "front==rear",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mi>f</mi><mi>r</mi><mi>o</mi><mi>n</mi><mi>t</mi><mo>==</mo><mi>r</mi><mi>e</mi><mi>a</mi><mi>r</mi></mrow></math>"
+  },
+  {
+   "tex": "a!=b",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mi>a</mi><mo>!=</mo><mi>b</mi></mrow></math>"
+  },
+  {
+   "tex": "\\sin x + \\cos^2 x",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mi>sin</mi><mo>&#x2061;</mo><mi>x</mi><mo>+</mo><msup><mi>cos</mi><mo>&#x2061;</mo><mn>2</mn></msup><mi>x</mi></mrow></math>"
+  },
+  {
+   "tex": "2\\cdot 3\\times 4",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mn>2</mn><mo>·</mo><mn>3</mn><mo>×</mo><mn>4</mn></mrow></math>"
+  },
+  {
+   "tex": "\\{1,2\\}",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mo stretchy=\"false\">{</mo><mn>1</mn><mo>,</mo><mn>2</mn><mo stretchy=\"false\">}</mo></mrow></math>"
+  },
+  {
+   "tex": "50\\%",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mn>50</mn><mo>%</mo></mrow></math>"
+  },
+  {
+   "tex": "'",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><msup><mrow></mrow><mo>′</mo></msup></mrow></math>"
+  },
+  {
+   "tex": "^2",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><msup><mrow></mrow><mn>2</mn></msup></mrow></math>"
+  },
+  {
+   "tex": "\\max_{x} f(x)",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><munder><mi>max</mi><mrow><mi>x</mi></mrow></munder><mi>f</mi><mo stretchy=\"false\">(</mo><mi>x</mi><mo stretchy=\"false\">)</mo></mrow></math>"
+  },
+  {
+   "tex": "x^\\alpha",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><msup><mi>x</mi><mi>α</mi></msup></mrow></math>"
+  },
+  {
+   "tex": "\\Delta x",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mi>Δ</mi><mi>x</mi></mrow></math>"
+  },
+  {
+   "tex": "\\mathrm{front}",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mi mathvariant=\"normal\">front</mi></mrow></math>"
+  },
+  {
+   "tex": "\\left. x \\right|",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mrow><mi>x</mi><mo fence=\"true\" stretchy=\"false\">|</mo></mrow></mrow></math>"
+  },
+  {
+   "tex": "a\\,b\\;c\\quad d",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mi>a</mi><mspace width=\"0.17em\"></mspace><mi>b</mi><mspace width=\"0.28em\"></mspace><mi>c</mi><mspace width=\"1em\"></mspace><mi>d</mi></mrow></math>"
+  },
+  {
+   "tex": "\\frac{2h+h^2}{h}=2+h",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mfrac><mrow><mn>2</mn><mi>h</mi><mo>+</mo><msup><mi>h</mi><mn>2</mn></msup></mrow><mrow><mi>h</mi></mrow></mfrac><mo>=</mo><mn>2</mn><mo>+</mo><mi>h</mi></mrow></math>"
+  },
+  {
+   "tex": "h\\ne 0",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mi>h</mi><mo>≠</mo><mn>0</mn></mrow></math>"
+  },
+  {
+   "tex": "f'(x_0)=\\lim_{h\\to 0} \\frac{f(x_0+h)-f(x_0)}{h}",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><msup><mi>f</mi><mo>′</mo></msup><mo stretchy=\"false\">(</mo><msub><mi>x</mi><mn>0</mn></msub><mo stretchy=\"false\">)</mo><mo>=</mo><munder><mi>lim</mi><mrow><mi>h</mi><mo>→</mo><mn>0</mn></mrow></munder><mfrac><mrow><mi>f</mi><mo stretchy=\"false\">(</mo><msub><mi>x</mi><mn>0</mn></msub><mo>+</mo><mi>h</mi><mo stretchy=\"false\">)</mo><mo>−</mo><mi>f</mi><mo stretchy=\"false\">(</mo><msub><mi>x</mi><mn>0</mn></msub><mo stretchy=\"false\">)</mo></mrow><mrow><mi>h</mi></mrow></mfrac></mrow></math>"
+  },
+  {
+   "tex": "x_0",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><msub><mi>x</mi><mn>0</mn></msub></mrow></math>"
+  },
+  {
+   "tex": "t_0=1",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><msub><mi>t</mi><mn>0</mn></msub><mo>=</mo><mn>1</mn></mrow></math>"
+  },
+  {
+   "tex": "2x",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mn>2</mn><mi>x</mi></mrow></math>"
+  },
+  {
+   "tex": "5x^4",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mn>5</mn><msup><mi>x</mi><mn>4</mn></msup></mrow></math>"
+  },
+  {
+   "tex": "\\left(\\frac{f}{g}\\right)'=\\frac{f'g-fg'}{g^2}",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><msup><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mfrac><mrow><mi>f</mi></mrow><mrow><mi>g</mi></mrow></mfrac><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mo>′</mo></msup><mo>=</mo><mfrac><mrow><msup><mi>f</mi><mo>′</mo></msup><mi>g</mi><mo>−</mo><mi>f</mi><msup><mi>g</mi><mo>′</mo></msup></mrow><mrow><msup><mi>g</mi><mn>2</mn></msup></mrow></mfrac></mrow></math>"
+  },
+  {
+   "tex": "\\frac{x+1}{x-1}",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mfrac><mrow><mi>x</mi><mo>+</mo><mn>1</mn></mrow><mrow><mi>x</mi><mo>−</mo><mn>1</mn></mrow></mfrac></mrow></math>"
+  },
+  {
+   "tex": "\\frac{0}{0}",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mfrac><mrow><mn>0</mn></mrow><mrow><mn>0</mn></mrow></mfrac></mrow></math>"
+  },
+  {
+   "tex": "f'(x_0)",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><msup><mi>f</mi><mo>′</mo></msup><mo stretchy=\"false\">(</mo><msub><mi>x</mi><mn>0</mn></msub><mo stretchy=\"false\">)</mo></mrow></math>"
+  },
+  {
+   "tex": "\\mathrm{push}(x)",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mi mathvariant=\"normal\">push</mi><mo stretchy=\"false\">(</mo><mi>x</mi><mo stretchy=\"false\">)</mo></mrow></math>"
+  },
+  {
+   "tex": "\\mathrm{top}=-1",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mi mathvariant=\"normal\">top</mi><mo>=</mo><mo>−</mo><mn>1</mn></mrow></math>"
+  },
+  {
+   "tex": "\\mathrm{front}",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mi mathvariant=\"normal\">front</mi></mrow></math>"
+  },
+  {
+   "tex": "Q_d",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><msub><mi>Q</mi><mi>d</mi></msub></mrow></math>"
+  },
+  {
+   "tex": "Q_d-Q_s",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><msub><mi>Q</mi><mi>d</mi></msub><mo>−</mo><msub><mi>Q</mi><mi>s</mi></msub></mrow></math>"
+  },
+  {
+   "tex": "c_{ij}=\\sum a_{ik}b_{kj}",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><msub><mi>c</mi><mrow><mi>i</mi><mi>j</mi></mrow></msub><mo>=</mo><mo largeop=\"true\" movablelimits=\"true\">∑</mo><msub><mi>a</mi><mrow><mi>i</mi><mi>k</mi></mrow></msub><msub><mi>b</mi><mrow><mi>k</mi><mi>j</mi></mrow></msub></mrow></math>"
+  },
+  {
+   "tex": "P(A\\mid B)=\\frac{P(AB)}{P(B)}",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mi>P</mi><mo stretchy=\"false\">(</mo><mi>A</mi><mo>∣</mo><mi>B</mi><mo stretchy=\"false\">)</mo><mo>=</mo><mfrac><mrow><mi>P</mi><mo stretchy=\"false\">(</mo><mi>A</mi><mi>B</mi><mo stretchy=\"false\">)</mo></mrow><mrow><mi>P</mi><mo stretchy=\"false\">(</mo><mi>B</mi><mo stretchy=\"false\">)</mo></mrow></mfrac></mrow></math>"
+  },
+  {
+   "tex": "P(2\\mid \\text{偶数})=\\frac{1}{3}",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mi>P</mi><mo stretchy=\"false\">(</mo><mn>2</mn><mo>∣</mo><mtext>偶数</mtext><mo stretchy=\"false\">)</mo><mo>=</mo><mfrac><mrow><mn>1</mn></mrow><mrow><mn>3</mn></mrow></mfrac></mrow></math>"
+  },
+  {
+   "tex": "P(\\text{偶数}\\mid 2)=1",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mi>P</mi><mo stretchy=\"false\">(</mo><mtext>偶数</mtext><mo>∣</mo><mn>2</mn><mo stretchy=\"false\">)</mo><mo>=</mo><mn>1</mn></mrow></math>"
+  },
+  {
+   "tex": "P(\\text{点数为}2\\mid \\text{偶数})=\\left(\\frac{1}{6}\\right)\\div\\left(\\frac{1}{2}\\right)=\\frac{1}{3}",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mi>P</mi><mo stretchy=\"false\">(</mo><mtext>点数为</mtext><mn>2</mn><mo>∣</mo><mtext>偶数</mtext><mo stretchy=\"false\">)</mo><mo>=</mo><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mfrac><mrow><mn>1</mn></mrow><mrow><mn>6</mn></mrow></mfrac><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mo>÷</mo><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mfrac><mrow><mn>1</mn></mrow><mrow><mn>2</mn></mrow></mfrac><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mo>=</mo><mfrac><mrow><mn>1</mn></mrow><mrow><mn>3</mn></mrow></mfrac></mrow></math>"
+  },
+  {
+   "tex": "P(D)=P(\\text{甲})P(D\\mid \\text{甲})+P(\\text{乙})P(D\\mid \\text{乙})",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mi>P</mi><mo stretchy=\"false\">(</mo><mi>D</mi><mo stretchy=\"false\">)</mo><mo>=</mo><mi>P</mi><mo stretchy=\"false\">(</mo><mtext>甲</mtext><mo stretchy=\"false\">)</mo><mi>P</mi><mo stretchy=\"false\">(</mo><mi>D</mi><mo>∣</mo><mtext>甲</mtext><mo stretchy=\"false\">)</mo><mo>+</mo><mi>P</mi><mo stretchy=\"false\">(</mo><mtext>乙</mtext><mo stretchy=\"false\">)</mo><mi>P</mi><mo stretchy=\"false\">(</mo><mi>D</mi><mo>∣</mo><mtext>乙</mtext><mo stretchy=\"false\">)</mo></mrow></math>"
+  },
+  {
+   "tex": "\\frac{3}{7}+\\frac{4}{7}=1",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mfrac><mrow><mn>3</mn></mrow><mrow><mn>7</mn></mrow></mfrac><mo>+</mo><mfrac><mrow><mn>4</mn></mrow><mrow><mn>7</mn></mrow></mfrac><mo>=</mo><mn>1</mn></mrow></math>"
+  },
+  {
+   "tex": "\\left(\\frac{1}{6}\\right)\\div\\left(\\frac{1}{2}\\right)=\\frac{1}{3}",
+   "mathml": "<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><mrow><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mfrac><mrow><mn>1</mn></mrow><mrow><mn>6</mn></mrow></mfrac><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mo>÷</mo><mrow><mo fence=\"true\" stretchy=\"true\">(</mo><mfrac><mrow><mn>1</mn></mrow><mrow><mn>2</mn></mrow></mfrac><mo fence=\"true\" stretchy=\"true\">)</mo></mrow><mo>=</mo><mfrac><mrow><mn>1</mn></mrow><mrow><mn>3</mn></mrow></mfrac></mrow></math>"
+  }
+ ],
+ "errors": [
+  [
+   "\\begin{x}",
+   "不支持的命令"
+  ],
+  [
+   "\\unknownCmd{1}",
+   "不支持的命令"
+  ],
+  [
+   "\\frac{1}",
+   "缺少参数"
+  ],
+  [
+   "x^{",
+   "缺少 }"
+  ],
+  [
+   "a}",
+   "多余的 }"
+  ],
+  [
+   "\\left( x",
+   "缺少 \\right"
+  ],
+  [
+   "\\sqrt",
+   "缺少参数"
+  ]
+ ]
+}

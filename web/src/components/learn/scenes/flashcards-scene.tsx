@@ -4,12 +4,13 @@ import { BellPlus, Check, ChevronLeft, ChevronRight, RotateCw } from "lucide-rea
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { stripMath } from "@/lib/learn/math/rich";
 import type { CardMark } from "@/lib/learn/progress";
 import { lessonToReviewCards } from "@/lib/learn/review";
 import type { Lesson, LessonScene } from "@/lib/learn/schema";
 import { addReviewCards, updateProgress, useProgress, useReviewCards } from "../learn-storage";
 import styles from "../learn.module.css";
-import { BasisLine, SourceBadges, splitCitations } from "../source-badges";
+import { BasisLine, RichText, SourceBadges, splitCitations } from "../source-badges";
 import { SceneHeader } from "./scene-header";
 
 const MARKS: { mark: CardMark; label: string }[] = [
@@ -60,20 +61,29 @@ export function FlashcardsScene({ scene, lesson }: { scene: Extract<LessonScene,
         className={styles.flash}
         data-flipped={flipped}
         aria-pressed={flipped}
-        aria-label={flipped ? `${card.front}：已翻到背面，点击返回` : `${card.front}：点击翻看解释`}
+        aria-label={flipped ? `${stripMath(card.front)}：已翻到背面，点击返回` : `${stripMath(card.front)}：点击翻看解释`}
         onClick={() => setFlipped((value) => !value)}
       >
         <span className={styles.flashInner}>
           <span className={`${styles.face} ${styles.faceFront}`} aria-hidden={flipped}>
-            <strong>{card.front}</strong>
-            {card.hint && <span className={styles.faceHint}>提示：{card.hint}</span>}
+            <strong>
+              <RichText text={card.front} />
+            </strong>
+            {card.hint && (
+              <span className={styles.faceHint}>
+                提示：
+                <RichText text={card.hint} />
+              </span>
+            )}
             <span className={styles.flipTip}>
               <RotateCw className="size-3.5" />
               点击翻面
             </span>
           </span>
           <span className={`${styles.face} ${styles.faceBack}`} aria-hidden={!flipped}>
-            <strong>{back.text}</strong>
+            <strong>
+              <RichText text={back.text} />
+            </strong>
           </span>
         </span>
       </button>

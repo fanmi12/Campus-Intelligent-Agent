@@ -4,12 +4,14 @@ import { BellPlus, PartyPopper, RotateCw } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { stripMath } from "@/lib/learn/math/rich";
 import { addDays, beijingToday, describeInterval, dueCards, GRADES, schedule, type ReviewGrade } from "@/lib/learn/review";
 import { remindReview } from "./export";
 import { sendLearnEvent } from "./learn-events";
 import { LearnHeader } from "./learn-header";
 import { saveReviewCard, useReviewCards } from "./learn-storage";
 import styles from "./learn.module.css";
+import { RichText } from "./source-badges";
 
 // 今日复习：到期的闪卡逐张翻面、评分，按评分排下次复习的日子（简化的 SM-2）
 export default function ReviewDeck() {
@@ -45,19 +47,23 @@ export default function ReviewDeck() {
               className={styles.flash}
               data-flipped={flipped}
               aria-pressed={flipped}
-              aria-label={flipped ? `${card.front}：已翻到背面，点击返回` : `${card.front}：点击翻看解释`}
+              aria-label={flipped ? `${stripMath(card.front)}：已翻到背面，点击返回` : `${stripMath(card.front)}：点击翻看解释`}
               onClick={() => setFlipped((value) => !value)}
             >
               <span className={styles.flashInner}>
                 <span className={`${styles.face} ${styles.faceFront}`} aria-hidden={flipped}>
-                  <strong>{card.front}</strong>
+                  <strong>
+                    <RichText text={card.front} />
+                  </strong>
                   <span className={styles.flipTip}>
                     <RotateCw className="size-3.5" />
                     先想一想，再点击翻面
                   </span>
                 </span>
                 <span className={`${styles.face} ${styles.faceBack}`} aria-hidden={!flipped}>
-                  <strong>{card.back}</strong>
+                  <strong>
+                    <RichText text={card.back} />
+                  </strong>
                 </span>
               </span>
             </button>

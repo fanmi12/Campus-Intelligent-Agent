@@ -81,7 +81,9 @@ function ChoiceQuestion({ lessonId, sceneId, question, index, total, onContinue 
                 onChange={() => toggle(optionIndex)}
               />
               <span className={styles.letter}>{letterOf(optionIndex)}.</span>
-              <span className="min-w-0 flex-1">{option}</span>
+              <span className="min-w-0 flex-1">
+                <RichText text={option} />
+              </span>
               {state === "correct" && <Check className="mt-1 size-4 shrink-0 text-success" aria-label="正确答案" />}
               {state === "wrong" && <X className="mt-1 size-4 shrink-0 text-destructive" aria-label="你的选择有误" />}
             </label>
@@ -231,7 +233,9 @@ function ShortQuestion({ lessonId, sceneId, question, index, total, onContinue }
               <strong>得分点</strong>
               <ul className={styles.rubric}>
                 {question.rubric.map((item, itemIndex) => (
-                  <li key={itemIndex}>{item}</li>
+                  <li key={itemIndex}>
+                    <RichText text={item} />
+                  </li>
                 ))}
               </ul>
             </>
@@ -303,8 +307,13 @@ function Results({ scene, lessonId, questions, hasNext, onRestart, onNext }: { s
             <li key={index} className={`${styles.row} items-start`}>
               <Icon className={`mt-1 size-4 shrink-0 ${tone}`} aria-label={score >= 80 ? "答对" : score >= 40 ? "部分对" : "没答对"} />
               <div className="min-w-0 flex-1">
-                <p className="text-[15px] leading-7">{question.prompt}</p>
-                <p className={styles.muted}>考查：{question.point}</p>
+                <p className="text-[15px] leading-7">
+                  <RichText text={question.prompt} />
+                </p>
+                <p className={styles.muted}>
+                  考查：
+                  <RichText text={question.point} />
+                </p>
               </div>
             </li>
           );

@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { featuredLessons } from "../src/lib/learn/featured";
+import { figuresSchema } from "../src/lib/learn/figure";
 import { demoLesson, previewLesson } from "../src/lib/learn/fixtures";
+import { splitMath } from "../src/lib/learn/math/rich";
+import { checkTex } from "../src/lib/learn/math/tex";
 import {
   createLessonRequestSchema,
   flashcardsContentSchema,
@@ -133,6 +136,22 @@ for (const lesson of featuredLessons) {
   assert.ok(lesson.grounding === "campus" ? lesson.sources.length > 0 : lesson.sources.length === 0, `${lesson.id} 的资料条数和依据不一致：校园课要带出处，学科课没有资料`);
 }
 assert.equal(new Set(featuredLessons.map((lesson) => lesson.id)).size, featuredLessons.length, "精选课程 id 不能重复");
+// 精选课程里的图像规格都合格、公式都能解析；讲解词是读出来的，不能有 $ 公式
+function everyString(value: unknown, path: string, visit: (text: string, path: string) => void) {
+  if (typeof value === "string") visit(value, path);
+  else if (Array.isArray(value)) value.forEach((item, index) => everyString(item, `${path}.${index}`, visit));
+  else if (value && typeof value === "object") for (const [key, item] of Object.entries(value)) everyString(item, `${path}.${key}`, visit);
+}
+for (const lesson of featuredLessons) {
+  for (const item of lesson.scenes) {
+    if (item.kind === "slide" && item.content?.figures) accepts(figuresSchema, item.content.figures, `精选课程 ${lesson.id}「${item.title}」的图像`);
+    everyString(item.content, `${lesson.id}/${item.id}`, (text, path) => {
+      if (path.includes(".narration.")) return assert.ok(!text.includes("$"), `${path} 讲解词里不能有 $ 公式`);
+      if (path.includes(".figures.")) return;
+      for (const part of splitMath(text)) if (part.type === "math") assert.equal(checkTex(part.tex), null, `${path} 的公式 ${part.tex} 解析失败`);
+    });
+  }
+}
 assert.ok(LESSON_ID.test(demoLesson.id), "演示课程 id 要符合课程 id 格式");
 assert.deepEqual(demoLesson.scenes.map((item) => item.kind), ["slide", "slide", "quiz", "flashcards", "slide", "summary"]);
 assert.ok(demoLesson.scenes.every((item) => item.status === "ready" && item.content), "演示课程的每一页都是 ready");

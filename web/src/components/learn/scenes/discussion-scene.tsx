@@ -7,6 +7,7 @@ import { AgentAvatar } from "../agent-avatar";
 import { ChatInput } from "../chat-input";
 import { updateProgress, useProgress } from "../learn-storage";
 import styles from "../learn.module.css";
+import { RichText } from "../source-badges";
 import { type ChatTurn, useDiscussion } from "../use-discussion";
 import { SceneHeader } from "./scene-header";
 
@@ -31,7 +32,7 @@ function Turn({ turn }: { turn: ChatTurn }) {
           {info.name} · {info.role}
         </p>
         <div className={styles.bubble}>
-          {turn.text || <span className="text-muted-foreground">正在想…</span>}
+          {turn.text ? <RichText text={turn.text} /> : <span className="text-muted-foreground">正在想…</span>}
           {turn.streaming && turn.text && <span className="ml-0.5 inline-block h-4 w-0.5 translate-y-0.5 animate-pulse bg-current" aria-hidden />}
         </div>
       </div>
@@ -68,8 +69,12 @@ export function DiscussionScene({ scene, lesson }: { scene: Extract<LessonScene,
       <div className="flex flex-1 flex-col gap-4">
         <SceneHeader kind="discussion" title={scene.title} />
         <div className={styles.panel}>
-          <p className="text-[16.5px] leading-[1.75] font-semibold">{content.question}</p>
-          <p className={`${styles.muted} mt-1`}>{content.context}</p>
+          <p className="text-[16.5px] leading-[1.75] font-semibold">
+            <RichText text={content.question} />
+          </p>
+          <p className={`${styles.muted} mt-1`}>
+            <RichText text={content.context} />
+          </p>
         </div>
         <ul className="flex flex-col gap-3" aria-live="polite" aria-label="课堂讨论">
           {content.opening.map((turn, index) => (
