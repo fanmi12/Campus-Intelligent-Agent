@@ -1,0 +1,133 @@
+/* 小狮课堂专用样式。只用 globals.css 里已有的语义变量（primary / accent / card / border / muted / success / destructive / gold / chart-*），
+   不写死颜色，深浅色都能正常显示。 */
+
+@keyframes learnShimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+/* ---------- 页面导航 ---------- */
+.nav { display: flex; gap: 8px; overflow-x: auto; padding: 8px 16px; scrollbar-width: none; }
+.nav::-webkit-scrollbar { display: none; }
+.navItem { display: inline-flex; min-height: 40px; flex-shrink: 0; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 999px; background: var(--card); padding: 0 13px; font-size: 13px; white-space: nowrap; transition: background-color 150ms, border-color 150ms; }
+.navItem:hover { background: var(--muted); }
+.navItem[aria-current="step"] { border-color: var(--primary); background: var(--accent); color: var(--accent-foreground); font-weight: 600; }
+.navItem[data-state="pending"], .navItem[data-state="generating"] { color: var(--muted-foreground); }
+.navItem[data-state="failed"] { border-color: color-mix(in oklch, var(--destructive) 40%, var(--border)); }
+.navItem:focus-visible, .option:focus-within, .tap:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* ---------- 通用块 ---------- */
+.panel { border: 1px solid var(--border); border-radius: 18px; background: var(--card); padding: 16px; }
+.eyebrow { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--primary); }
+.sceneTitle { font-size: 21px; line-height: 1.4; font-weight: 650; outline: none; overflow-wrap: anywhere; }
+.lead { font-size: 16px; line-height: 1.8; color: color-mix(in oklch, var(--foreground) 85%, transparent); }
+.muted { font-size: 13px; line-height: 1.7; color: var(--muted-foreground); }
+.skeleton { border-radius: 16px; background: linear-gradient(90deg, var(--muted) 25%, color-mix(in oklch, var(--muted), var(--card) 60%) 50%, var(--muted) 75%); background-size: 200% 100%; animation: learnShimmer 1.6s linear infinite; }
+
+/* ---------- 讲解页 ---------- */
+.points { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.point { display: flex; gap: 12px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); padding: 14px; transition: opacity 250ms, border-color 250ms, background-color 250ms, box-shadow 250ms; }
+.point[data-active="true"] { border-color: var(--primary); background: var(--accent); box-shadow: 0 0 0 1px var(--primary); }
+.point[data-dim="true"] { opacity: 0.55; }
+.pointIndex { display: grid; width: 28px; height: 28px; flex-shrink: 0; place-items: center; border-radius: 999px; background: color-mix(in oklch, var(--primary) 12%, transparent); color: var(--primary); font-size: 13px; font-weight: 600; }
+.pointHeading { font-size: 15px; font-weight: 600; line-height: 1.6; }
+.pointBody { margin-top: 2px; font-size: 15px; line-height: 1.8; color: color-mix(in oklch, var(--foreground) 85%, transparent); overflow-wrap: anywhere; }
+.example { display: flex; gap: 10px; border: 1px solid color-mix(in oklch, var(--gold) 35%, var(--border)); border-radius: 16px; background: color-mix(in oklch, var(--gold) 12%, var(--card)); padding: 14px; }
+.example strong { display: block; font-size: 14px; }
+.example p { margin-top: 2px; font-size: 15px; line-height: 1.8; overflow-wrap: anywhere; }
+.tableWrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; background: var(--card); }
+.table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.6; }
+.table th, .table td { border-bottom: 1px solid var(--border); padding: 10px 12px; text-align: left; vertical-align: top; }
+.table th { background: var(--muted); font-weight: 600; white-space: nowrap; }
+.table tr:last-child td { border-bottom: 0; }
+
+/* ---------- 来源角标 ---------- */
+.badge { position: relative; display: inline-grid; width: 20px; height: 20px; margin-inline: 2px; place-items: center; border-radius: 999px; background: color-mix(in oklch, var(--primary) 14%, transparent); color: var(--primary); font-size: 11px; font-weight: 600; line-height: 1; vertical-align: 1px; }
+.badge::after { content: ""; position: absolute; inset: -10px; }
+.badge:hover { background: color-mix(in oklch, var(--primary) 24%, transparent); }
+.badge:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.basis { display: flex; align-items: flex-start; gap: 6px; font-size: 12.5px; line-height: 1.7; color: var(--muted-foreground); }
+
+/* ---------- 字幕条 ---------- */
+.narration { position: sticky; bottom: 0; margin-top: 18px; border: 1px solid var(--border); border-radius: 20px; background: color-mix(in oklch, var(--card) 94%, transparent); box-shadow: 0 -8px 24px -14px color-mix(in oklch, var(--foreground) 30%, transparent); backdrop-filter: blur(10px); }
+.caption { display: flex; min-height: 66px; gap: 10px; padding: 13px 14px 4px; font-size: 15px; line-height: 1.75; }
+.captionHint { color: var(--muted-foreground); }
+.controls { display: flex; align-items: center; gap: 6px; padding: 6px 10px 10px; }
+.controls .spacer { flex: 1; }
+
+/* ---------- 测验 ---------- */
+.options { display: flex; min-width: 0; flex-direction: column; gap: 10px; margin: 0; border: 0; padding: 0; }
+.options legend { margin-bottom: 14px; padding: 0; font-size: 16.5px; font-weight: 600; line-height: 1.75; overflow-wrap: anywhere; }
+.option { display: flex; min-height: 50px; align-items: flex-start; gap: 10px; border: 1px solid var(--border); border-radius: 14px; background: var(--card); padding: 12px 14px; font-size: 15px; line-height: 1.7; cursor: pointer; overflow-wrap: anywhere; transition: background-color 150ms, border-color 150ms; }
+.option input { width: 17px; height: 17px; flex-shrink: 0; margin-top: 4px; accent-color: var(--primary); }
+.option[data-selected="true"] { border-color: var(--primary); background: var(--accent); }
+.option[data-state="correct"] { border-color: var(--success); background: color-mix(in oklch, var(--success) 12%, var(--card)); }
+.option[data-state="wrong"] { border-color: var(--destructive); background: color-mix(in oklch, var(--destructive) 8%, var(--card)); }
+.option[data-locked="true"] { cursor: default; }
+.letter { flex-shrink: 0; font-weight: 600; color: var(--muted-foreground); }
+.feedback { border: 1px solid var(--border); border-radius: 14px; background: var(--muted); padding: 14px; font-size: 14.5px; line-height: 1.85; }
+.feedback[data-tone="correct"] { border-color: color-mix(in oklch, var(--success) 45%, var(--border)); background: color-mix(in oklch, var(--success) 9%, var(--card)); }
+.feedback[data-tone="wrong"] { border-color: color-mix(in oklch, var(--destructive) 40%, var(--border)); background: color-mix(in oklch, var(--destructive) 6%, var(--card)); }
+.feedback[data-tone="partial"] { border-color: color-mix(in oklch, var(--warning) 50%, var(--border)); background: color-mix(in oklch, var(--warning) 9%, var(--card)); }
+.rubric { margin: 6px 0 0; padding-left: 1.2em; }
+.scoreBar { height: 8px; overflow: hidden; border-radius: 999px; background: var(--muted); }
+.scoreBar > span { display: block; height: 100%; border-radius: inherit; background: var(--primary); transition: width 400ms; }
+
+/* ---------- 闪卡 ---------- */
+.flash { display: block; width: 100%; height: 270px; perspective: 1200px; text-align: center; }
+.flashInner { position: relative; display: block; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1); }
+.flash[data-flipped="true"] .flashInner { transform: rotateY(180deg); }
+.face { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; overflow: auto; border: 1px solid var(--border); border-radius: 22px; padding: 22px; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.faceFront { background: color-mix(in oklch, var(--accent) 45%, var(--card)); }
+.faceFront > strong { font-size: clamp(22px, 6vw, 30px); font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
+.faceBack { transform: rotateY(180deg); background: var(--accent); color: var(--accent-foreground); }
+.faceBack > strong { font-size: 18px; font-weight: 500; line-height: 1.75; overflow-wrap: anywhere; }
+.faceHint { font-size: 13px; line-height: 1.6; opacity: 0.85; }
+.flipTip { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; font-size: 12px; color: var(--muted-foreground); }
+.marks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mark { display: inline-flex; min-height: 46px; align-items: center; justify-content: center; gap: 6px; border: 1px solid var(--border); border-radius: 14px; background: var(--card); font-size: 14.5px; font-weight: 500; transition: background-color 150ms, border-color 150ms; }
+.mark:hover:not(:disabled) { background: var(--muted); }
+.mark[aria-pressed="true"][data-mark="know"] { border-color: var(--success); background: color-mix(in oklch, var(--success) 12%, var(--card)); }
+.mark[aria-pressed="true"][data-mark="fuzzy"] { border-color: var(--warning); background: color-mix(in oklch, var(--warning) 12%, var(--card)); }
+.mark[aria-pressed="true"][data-mark="forgot"] { border-color: var(--destructive); background: color-mix(in oklch, var(--destructive) 8%, var(--card)); }
+.mark:disabled { opacity: 0.45; }
+
+/* ---------- 总结与知识结构图 ---------- */
+.recap { display: flex; flex-direction: column; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.map { display: grid; gap: 10px; }
+.mapNode { position: relative; border: 1px solid var(--border); border-radius: 14px; background: var(--card); padding: 12px 14px 12px 18px; }
+.mapNode::before { content: ""; position: absolute; top: 12px; bottom: 12px; left: 0; width: 4px; border-radius: 4px; background: var(--chart-1); }
+.mapNode:nth-child(5n + 2)::before { background: var(--chart-2); }
+.mapNode:nth-child(5n + 3)::before { background: var(--chart-3); }
+.mapNode:nth-child(5n + 4)::before { background: var(--chart-4); }
+.mapNode:nth-child(5n + 5)::before { background: var(--chart-5); }
+.mapLabel { font-size: 15px; font-weight: 600; line-height: 1.6; }
+.mapChildren { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.mapChip { border-radius: 999px; background: var(--muted); padding: 3px 10px; font-size: 13px; line-height: 1.6; }
+@media (min-width: 640px) { .map { grid-template-columns: 1fr 1fr; } }
+
+/* ---------- 讨论 ---------- */
+.bubble { max-width: 100%; border: 1px solid var(--border); border-radius: 4px 18px 18px 18px; background: var(--card); padding: 10px 14px; font-size: 15px; line-height: 1.75; overflow-wrap: anywhere; white-space: pre-wrap; }
+.bubble[data-self="true"] { border-color: transparent; border-radius: 18px 4px 18px 18px; background: var(--primary); color: var(--primary-foreground); }
+
+/* ---------- 表单、列表 ---------- */
+.seg { display: flex; gap: 4px; border-radius: 14px; background: var(--muted); padding: 4px; }
+.seg button { min-height: 40px; flex: 1; border-radius: 10px; font-size: 14px; transition: background-color 150ms, color 150ms; }
+.seg button[aria-pressed="true"] { background: var(--card); color: var(--primary); font-weight: 600; box-shadow: 0 1px 2px color-mix(in oklch, var(--foreground) 12%, transparent); }
+.seg button:focus-visible { outline: 2px solid var(--ring); outline-offset: 1px; }
+.chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { flex-shrink: 0; min-height: 40px; border: 1px solid var(--border); border-radius: 999px; background: var(--card); padding: 0 14px; font-size: 13.5px; white-space: nowrap; transition: background-color 150ms, border-color 150ms; }
+.chip:hover { border-color: color-mix(in oklch, var(--primary) 35%, var(--border)); background: var(--accent); }
+.chip:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.row { display: flex; width: 100%; align-items: center; gap: 12px; border: 1px solid var(--border); border-radius: 16px; background: var(--card); padding: 12px 14px; text-align: left; transition: background-color 150ms, border-color 150ms; }
+a.row:hover { border-color: color-mix(in oklch, var(--primary) 30%, var(--border)); background: var(--accent); }
+.row[data-gone="true"] { opacity: 0.55; }
+.tap:focus-visible { outline-offset: 2px; }
+.progressBar { height: 6px; overflow: hidden; border-radius: 999px; background: var(--muted); }
+.progressBar > span { display: block; height: 100%; border-radius: inherit; background: var(--primary); transition: width 400ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+  .point, .option, .mark, .flashInner, .scoreBar > span, .progressBar > span, .navItem, .chip, .row { transition: none; }
+}

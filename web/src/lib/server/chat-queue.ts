@@ -3,6 +3,15 @@ export type QueueState = { status: "waiting" | "running"; position: number; wait
 // 提问来源：client 是浏览器标识（同一 Wi-Fi 出口的同学互不影响），ip 是公网出口
 export type QueueOwner = { client: string; ip: string };
 export type QueueLimits = { perClient: number; perClientPerMinute: number; perIp: number };
+// 给同学看的提示文案；聊天队列用默认值，小狮课堂的备课队列换成自己的说法
+export type QueueMessages = {
+  full: string;
+  clientBusy: string;
+  clientTooFast: string;
+  ipBusy: string;
+  cancelled: string;
+  waitTimeout: string;
+};
 type Entry = { signal: AbortSignal; update: (state: QueueState) => void; resolve: (release: () => void) => void; reject: (error: Error) => void; cleanup: () => void; free: () => void };
 
 // 给同学看的排队提示（满员、提问过快等），接口原样展示
@@ -10,6 +19,14 @@ export class ChatQueueError extends Error {}
 
 // 同一浏览器最多同时 2 个（停止后马上重问时，上一个可能还没释放）
 const DEFAULT_LIMITS: QueueLimits = { perClient: 2, perClientPerMinute: 6, perIp: 40 };
+const DEFAULT_MESSAGES: QueueMessages = {
+  full: "排队人数已满，请稍后再试",
+  clientBusy: "上一个问题还在回答，请稍等",
+  clientTooFast: "提问有点快，请过一会儿再问",
+  ipBusy: "当前网络下提问的人太多，请稍后再试",
+  cancelled: "已取消排队",
+  waitTimeout: "排队等待超时，请稍后再试",
+};
 
 // 单进程生产服务的 FIFO 队列；开始处理时计入滚动一分钟额度。
 // 另按浏览器和公网出口限额，避免一个人连发或一台机器刷接口占满全站名额
@@ -22,22 +39,24 @@ export class ChatQueue {
   private held = new Map<string, number>();
   private asked = new Map<string, number[]>();
   private readonly limits: QueueLimits;
-  constructor(private concurrency = 5, private perMinute = 20, private capacity = 40, private windowMs = 60_000, private maxWaitMs = 180_000, limits: Partial<QueueLimits> = {}) {
+  private readonly messages: QueueMessages;
+  constructor(private concurrency = 5, private perMinute = 20, private capacity = 40, private windowMs = 60_000, private maxWaitMs = 180_000, limits: Partial<QueueLimits> = {}, messages: Partial<QueueMessages> = {}) {
     this.limits = { ...DEFAULT_LIMITS, ...limits };
+    this.messages = { ...DEFAULT_MESSAGES, ...messages };
   }
 
   // 只判断能否接下这个提问，不占名额；接口在开始流式回答前先查，被拒时直接返回 429
   check(owner?: QueueOwner): string | null {
-    if (this.pending.length >= this.capacity) return "排队人数已满，请稍后再试";
+    if (this.pending.length >= this.capacity) return this.messages.full;
     if (!owner) return null;
-    if (this.count(`client:${owner.client}`) >= this.limits.perClient) return "上一个问题还在回答，请稍等";
-    if (this.recentAsks(owner.client).length >= this.limits.perClientPerMinute) return "提问有点快，请过一会儿再问";
-    if (this.count(`ip:${owner.ip}`) >= this.limits.perIp) return "当前网络下提问的人太多，请稍后再试";
+    if (this.count(`client:${owner.client}`) >= this.limits.perClient) return this.messages.clientBusy;
+    if (this.recentAsks(owner.client).length >= this.limits.perClientPerMinute) return this.messages.clientTooFast;
+    if (this.count(`ip:${owner.ip}`) >= this.limits.perIp) return this.messages.ipBusy;
     return null;
   }
 
   acquire(signal: AbortSignal, update: Entry["update"], owner?: QueueOwner): Promise<() => void> {
-    if (signal.aborted) return Promise.reject(new ChatQueueError("已取消排队"));
+    if (signal.aborted) return Promise.reject(new ChatQueueError(this.messages.cancelled));
     const refused = this.check(owner);
     if (refused) return Promise.reject(new ChatQueueError(refused));
     const free = this.hold(owner);
@@ -51,8 +70,8 @@ export class ChatQueue {
         reject(new ChatQueueError(message));
         this.pump();
       };
-      const abort = () => remove("已取消排队");
-      const timeout = setTimeout(() => remove("排队等待超时，请稍后再试"), this.maxWaitMs);
+      const abort = () => remove(this.messages.cancelled);
+      const timeout = setTimeout(() => remove(this.messages.waitTimeout), this.maxWaitMs);
       const entry: Entry = { signal, update, resolve, reject, free, cleanup: () => { clearTimeout(timeout); signal.removeEventListener("abort", abort); } };
       signal.addEventListener("abort", abort, { once: true });
       this.pending.push(entry);
@@ -98,7 +117,7 @@ export class ChatQueue {
     while (this.pending.length && this.active < this.concurrency && this.starts.length < this.perMinute) {
       const entry = this.pending.shift()!;
       entry.cleanup();
-      if (entry.signal.aborted) { entry.free(); entry.reject(new ChatQueueError("已取消排队")); continue; }
+      if (entry.signal.aborted) { entry.free(); entry.reject(new ChatQueueError(this.messages.cancelled)); continue; }
       this.active++;
       this.starts.push(Date.now());
       entry.update({ status: "running", position: 0, waiting: this.pending.length, active: this.active });
@@ -113,7 +132,13 @@ export class ChatQueue {
   }
 }
 
-export const chatQueue = new ChatQueue(env.chatConcurrency, env.chatRateLimit, env.chatQueueCapacity, 60_000, 180_000, {
+declare global {
+  var __campusChatQueue: ChatQueue | undefined;
+}
+
+// 聊天接口和小狮课堂的讨论接口是不同的路由，开发模式下各自可能加载一份模块，
+// 必须共用同一个队列实例，否则容量和每人限额都会翻倍
+export const chatQueue = (globalThis.__campusChatQueue ??= new ChatQueue(env.chatConcurrency, env.chatRateLimit, env.chatQueueCapacity, 60_000, 180_000, {
   perClientPerMinute: env.chatClientRateLimit,
   perIp: env.chatIpActiveLimit,
-});
+}));

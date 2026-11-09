@@ -244,6 +244,8 @@ export type Lesson = {
   level: Level;
   minutes: Minutes;
   grounding: Grounding;
+  // 创建时选的依据（auto 由服务端在生成时判定为 campus 或 general）；重新生成时沿用
+  requestedGrounding?: RequestedGrounding;
   title: string; // 大纲出来前用 topic 截断到 30 字
   summary: string;
   audience: string;

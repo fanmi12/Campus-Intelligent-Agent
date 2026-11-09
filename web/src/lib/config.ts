@@ -14,6 +14,14 @@ export const site = {
     questions: 10,
     minutes: 2,
   },
+  // 小狮课堂（AI 互动微课）：入口、首页文案和示例主题
+  learn: {
+    name: "小狮课堂",
+    tagline: "一句话，备一节互动微课",
+    description: "输入想学的内容，狮老师帮你备一节 5-15 分钟的互动微课：讲解、测验、闪卡、讨论，学完还能生成复习计划。",
+    examples: ["图书馆怎么借书、续借和还书", "考试违纪会受到什么处分", "宿舍用电有哪些禁止事项", "高数：极限的直观理解", "Python 入门：for 循环", "四级听力的答题技巧"],
+    credit: "课堂形式参考了清华大学开源项目 OpenMAIC 的设计",
+  },
   suggestions: [
     {
       icon: "map",

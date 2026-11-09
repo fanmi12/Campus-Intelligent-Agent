@@ -52,6 +52,34 @@ CREATE TABLE IF NOT EXISTS meta (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
 );
+
+-- 小狮课堂：每节课一行，课程内容整体存成 JSON（data）
+CREATE TABLE IF NOT EXISTS lessons (
+  id TEXT PRIMARY KEY,
+  client_id TEXT,                    -- 创建者的匿名浏览器标识（配额、删除、重新生成），不关联身份
+  status TEXT NOT NULL,              -- generating | ready | failed
+  title TEXT NOT NULL DEFAULT '',
+  topic TEXT NOT NULL,
+  data TEXT NOT NULL,                -- Lesson JSON（不含 material）
+  material TEXT,                     -- 用户提供的资料原文：只给服务端生成用，不随接口返回，7 天后清空
+  views INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_lessons_client ON lessons (client_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_lessons_created ON lessons (created_at DESC);
+
+-- 学习行为（匿名，不存 IP），供后台统计和体验评测报告
+CREATE TABLE IF NOT EXISTS lesson_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  lesson_id TEXT NOT NULL,
+  client_id TEXT,
+  type TEXT NOT NULL,                -- view | scene | finish | grade | discuss | review
+  scene_id TEXT,
+  value REAL,                        -- finish：得分 0-100；其他可空
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_lesson_events_created ON lesson_events (created_at DESC);
 `;
 
 declare global {
