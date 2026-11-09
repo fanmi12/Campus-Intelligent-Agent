@@ -4,6 +4,7 @@ import { useId, useMemo, useState } from "react";
 import { compileExpr, type CompiledExpr, type FigureColor, type PanelsFigure, type PlotFigure, type PlotSpec } from "@/lib/learn/figure";
 import { RichText } from "../source-badges";
 import styles from "./figure.module.css";
+import { choosePlacement, labelBox, type Box, type Placement } from "./labels";
 import { Arrow, ArrowHead, AXIS, COLOR, GRID, MUTED, niceStep, num, tint, Txt } from "./svg";
 
 // 函数图 / 坐标图：曲线、直线、线段、箭头、多边形、点和文字，可以带一个滑块（曲线、坐标和读数里用同一个变量）。
@@ -81,9 +82,10 @@ export function PlotSvg({ spec, vars, label }: { spec: PlotSpec; vars: Vars; lab
     return e.every(Number.isFinite) ? e : null;
   };
 
-  const curvePath = (f: CompiledExpr, a: number, b: number): string => {
+  const sampleCurve = (f: CompiledExpr, a: number, b: number): { d: string; pts: [number, number][] } => {
     let d = "";
     let pen = false;
+    const pts: [number, number][] = [];
     for (let k = 0; k <= SAMPLES; k++) {
       const x = a + ((b - a) * k) / SAMPLES;
       const y = f.evaluate({ ...vars, x });
@@ -92,12 +94,57 @@ export function PlotSvg({ spec, vars, label }: { spec: PlotSpec; vars: Vars; lab
         continue;
       }
       d += `${pen ? "L" : "M"}${X(x).toFixed(1)} ${Y(y).toFixed(1)}`;
+      pts.push([X(x), Y(y)]);
       pen = true;
     }
-    return d;
+    return { d, pts };
   };
 
   const finite = (...values: number[]) => values.every(Number.isFinite);
+
+  // 曲线只算一次：画线和给点的名字避让都要用
+  const curves = (spec.curves ?? []).map((curve) => {
+    const f = compile(curve.f);
+    const [a, b] = curve.x ?? [x0, x1];
+    return f ? sampleCurve(f, a, b) : null;
+  });
+
+  // 点的名字：没指定位置的在候选位置里挑一个不压曲线、不压别的字的；指定了位置的原样用（精选课程手工调过）
+  const bounds = { x0: ml, x1: W - mr, y0: mt, y1: H - mb };
+  const obstacles: [number, number][] = curves.flatMap((curve) => curve?.pts ?? []);
+  const along = (x1p: number, y1p: number, x2p: number, y2p: number) => {
+    for (let k = 0; k <= 40; k++) obstacles.push([x1p + ((x2p - x1p) * k) / 40, y1p + ((y2p - y1p) * k) / 40]);
+  };
+  for (const line of spec.lines ?? []) {
+    const e = lineEnds(line);
+    if (e) along(X(e[0]), Y(e[1]), X(e[2]), Y(e[3]));
+  }
+  for (const seg of [...(spec.segs ?? []), ...(spec.arrows ?? [])]) {
+    const [px, py, qx, qy] = [ev(seg.p[0]), ev(seg.p[1]), ev(seg.q[0]), ev(seg.q[1])];
+    if (finite(px, py, qx, qy)) along(X(px), Y(py), X(qx), Y(qy));
+  }
+  const boxes: Box[] = [];
+  for (const item of spec.texts ?? []) {
+    const [px, py] = [ev(item.x), ev(item.y)];
+    if (finite(px, py)) boxes.push(labelBox(X(px), Y(py), { dx: item.dx ?? 0, dy: item.dy ?? 0, anchor: item.anchor ?? "start" }, item.t, item.size ?? 12));
+  }
+  const pointAt = (spec.pts ?? []).map((point) => [ev(point.x), ev(point.y)] as const);
+  (spec.pts ?? []).forEach((point, index) => {
+    const [px, py] = pointAt[index];
+    if (!finite(px, py)) return;
+    obstacles.push([X(px), Y(py)]);
+    if (point.label && (point.dx !== undefined || point.dy !== undefined || point.anchor !== undefined)) {
+      boxes.push(labelBox(X(px), Y(py), { dx: point.dx ?? 8, dy: point.dy ?? -8, anchor: point.anchor ?? "start" }, point.label, 12));
+    }
+  });
+  const placements = (spec.pts ?? []).map((point, index): Placement | null => {
+    const [px, py] = pointAt[index];
+    if (!point.label || !finite(px, py)) return null;
+    if (point.dx !== undefined || point.dy !== undefined || point.anchor !== undefined) return { dx: point.dx ?? 8, dy: point.dy ?? -8, anchor: point.anchor ?? "start" };
+    const placement = choosePlacement({ x: X(px), y: Y(py), text: point.label, size: 12, bounds, obstacles, boxes });
+    boxes.push(labelBox(X(px), Y(py), placement, point.label, 12));
+    return placement;
+  });
 
   return (
     <svg className={styles.plot} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label ?? "函数图像"}>
@@ -134,10 +181,9 @@ export function PlotSvg({ spec, vars, label }: { spec: PlotSpec; vars: Vars; lab
           );
         })}
         {(spec.curves ?? []).map((curve, index) => {
-          const f = compile(curve.f);
-          if (!f) return null;
-          const [a, b] = curve.x ?? [x0, x1];
-          return <path key={`curve${index}`} d={curvePath(f, a, b)} fill="none" stroke={pick(curve.color, "red")} strokeWidth={curve.w ?? 2.6} strokeDasharray={curve.dash} strokeLinejoin="round" />;
+          const sampled = curves[index];
+          if (!sampled) return null;
+          return <path key={`curve${index}`} d={sampled.d} fill="none" stroke={pick(curve.color, "red")} strokeWidth={curve.w ?? 2.6} strokeDasharray={curve.dash} strokeLinejoin="round" />;
         })}
         {(spec.lines ?? []).map((line, index) => {
           const e = lineEnds(line);
@@ -194,9 +240,10 @@ export function PlotSvg({ spec, vars, label }: { spec: PlotSpec; vars: Vars; lab
       })}
       {(spec.pts ?? []).map((point, index) => {
         const [px, py] = [ev(point.x), ev(point.y)];
-        if (!point.label || !finite(px, py)) return null;
+        const placement = placements[index];
+        if (!point.label || !placement || !finite(px, py)) return null;
         return (
-          <Txt key={`pl${index}`} x={X(px) + (point.dx ?? 8)} y={Y(py) + (point.dy ?? -8)} anchor={point.anchor} size={12} color={pick(point.color, "red")} weight={700} halo>
+          <Txt key={`pl${index}`} x={X(px) + placement.dx} y={Y(py) + placement.dy} anchor={placement.anchor} size={12} color={pick(point.color, "red")} weight={700} halo>
             {point.label}
           </Txt>
         );

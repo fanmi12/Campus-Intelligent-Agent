@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { hasMath, parseMatrix, parseRich, splitMath, stripMath } from "../src/lib/learn/math/rich";
+import { sanitizeMath } from "../src/lib/learn/math/sanitize";
 import { checkTex, splitTexAtRelations, texToMathML, texToPlain, TexError } from "../src/lib/learn/math/tex";
 import { speakable } from "../src/lib/learn/scene-text";
 
@@ -93,5 +94,18 @@ assert.equal(stripMath("没有公式 a[0]"), "没有公式 a[0]");
 assert.equal(stripMath("坏公式 $\\unknown{x}$ 保留原文"), "坏公式 \\unknown{x} 保留原文");
 assert.equal(speakable("得到 $x^2+1$ 再求导 [1]"), "得到 x²+1 再求导");
 assert.equal(speakable("先 A -> 再 B"), "先 A，再 B");
+
+// ---------- 生成后的清洗：模型各种写法的公式整理成 $…$ ----------
+assert.equal(sanitizeMath("没有公式"), "没有公式");
+assert.equal(sanitizeMath("令 $$x^2$$ 再算"), "令 $x^2$ 再算", "$$ 整理成 $");
+assert.equal(sanitizeMath("令 \\(x^2\\) 再算"), "令 $x^2$ 再算", "\\( \\) 整理成 $");
+assert.equal(sanitizeMath("令 \\[x^2\\] 再算"), "令 $x^2$ 再算", "\\[ \\] 整理成 $");
+assert.equal(sanitizeMath("$\\displaystyle\\dfrac{1}{2}$"), "$\\frac{1}{2}$", "去掉 displaystyle，dfrac 换成 frac");
+assert.equal(sanitizeMath("坏 $\\foo{x}$ 好"), "坏 foo x 好", "不支持的命令退回成文字");
+assert.equal(sanitizeMath("价格 $5 起"), "价格 \\$5 起", "单独的 $ 转义保留");
+assert.equal(sanitizeMath("$x$ 和 $y$"), "$x$ 和 $y$", "合格的公式原样");
+assert.equal(sanitizeMath("读 $x^2+1$ 然后 $\\frac{1}{2}$", true), "读 x²+1 然后 1/2", "讲解词里的公式换成纯文本");
+assert.equal(sanitizeMath("价格 $5 起", true), "价格 5 起", "讲解词里单独的 $ 去掉");
+assert.equal(sanitizeMath("矩阵 [[1,2],[3,4]] 不动"), "矩阵 [[1,2],[3,4]] 不动");
 
 console.log(`PASS: ${golden.golden.length} golden formulas, ${plain.length} plain-text forms, relation splitting, $ splitting, matrices, stripMath/speakable`);

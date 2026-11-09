@@ -97,10 +97,12 @@ async function main() {
         prompts.GRADE_INSTRUCTIONS,
         prompts.gradePrompt({ prompt: "题目", reference: "参考答案", rubric: ["得分点一", "得分点二"] }, "我的答案"),
       ];
-      for (const text of rendered) {
-        assert.ok(!/[{}]/.test(text), `提示词里还有没替换的占位符：${text.match(/.{0,20}[{}].{0,20}/)?.[0]}`);
+      // COMMON_RULES 是固定文字，里面的 LaTeX 示例本来就有花括号；其余是模板拼出来的，不能留下没替换的占位符
+      for (const [index, text] of rendered.entries()) {
+        if (index > 0) assert.ok(!/[{}]/.test(text), `提示词里还有没替换的占位符：${text.match(/.{0,20}[{}].{0,20}/)?.[0]}`);
         assert.ok(!text.includes("undefined"), "提示词里不能出现 undefined");
       }
+      assert.ok(prompts.COMMON_RULES.includes("$…$") && prompts.COMMON_RULES.includes("讲解词") && !prompts.COMMON_RULES.includes("不要用 LaTeX"), "规则里要求公式写成 $…$，讲解词里不写公式");
       const prefix = prompts.lessonContext(lessonInput, sources, material);
       assert.ok(prompts.scenePrompt(lessonInput, 0, sources, material).startsWith(prefix), "公共前缀在前，同一节课各页完全一致（DeepSeek 前缀缓存）");
       assert.ok(prompts.scenePrompt(lessonInput, 2, sources, material).startsWith(prefix));
@@ -251,6 +253,91 @@ async function main() {
       assert.ok(slideScene.kind === "slide" && slideScene.content?.points.every((point) => point.sourceNumbers.length === 0));
       const generalCards = generalDone.scenes[3];
       assert.ok(generalCards.kind === "flashcards" && generalCards.content?.cards[0].back === "数组 a[1] 是第二个元素");
+
+      // 公式：各种写法整理成 $…$，解析不了的退回文字，讲解词里不留公式
+      const math = newLesson();
+      const { model: mathModel } = mockModel((call) => {
+        if (call.tool === "submitFlashcards") {
+          const flashcards = contentOf("flashcards") as { cards: { back: string }[] };
+          flashcards.cards[0].back = "极限 $$\\lim_{h\\to 0}\\frac{f(x+h)-f(x)}{h}$$，价格 $5 起";
+          return flashcards;
+        }
+        if (call.tool !== "submitSlide") return goodHandler(call);
+        const slide = contentOf("slide") as { points: { body: string }[]; narration: { text: string }[] };
+        slide.points[0].body = "令 \\(f(x)=x^2\\)，再求导";
+        slide.points[1].body = "坏写法 $\\unsupported{x}+1$ 保留文字";
+        slide.narration[0].text = "平方是 $x^2$，读作 x 的平方";
+        return slide;
+      });
+      await generate.runLessonGeneration(math.lesson.id, { owner: math.owner, deps: { model: mathModel, search: noSearch } });
+      const mathDone = store.getLesson(math.lesson.id)!;
+      const mathSlide = mathDone.scenes[0];
+      assert.ok(mathSlide.kind === "slide" && mathSlide.content);
+      if (mathSlide.kind === "slide" && mathSlide.content) {
+        assert.equal(mathSlide.content.points[0].body, "令 $f(x)=x^2$，再求导", "\\( \\) 整理成 $ $");
+        assert.equal(mathSlide.content.points[1].body, "坏写法 unsupported x +1 保留文字", "不支持的命令退回成文字");
+        assert.equal(mathSlide.content.narration[0].text, "平方是 x²，读作 x 的平方", "讲解词里的公式换成纯文本");
+      }
+      const mathCards = mathDone.scenes[3];
+      assert.ok(mathCards.kind === "flashcards" && mathCards.content?.cards[0].back === "极限 $\\lim_{h\\to 0}\\frac{f(x+h)-f(x)}{h}$，价格 \\$5 起", "$$ 整理成 $ $，单独的 $ 转义保留");
+    }
+
+    // ---------- 5b. 学科课配图：大纲标了 figure 的讲解页多调用一次画图，最多 2 页；画不出来就不配 ----------
+    {
+      const flagged = (pages: number[]) =>
+        outlineData({
+          scenes: demoLesson.scenes.map(({ kind, title, goal, keyPoints }, index) => ({ kind, title, goal, keyPoints, ...(pages.includes(index) ? { figure: true } : {}) })),
+        });
+      const goodFigure = { title: "二次函数", caption: "顶点在原点，开口向上", x: [-3, 3], y: [-1, 10], xl: "x", yl: "y", curves: [{ f: "x^2" }], pts: [{ x: 0, y: 0, label: "顶点 (0, 0)" }] };
+      const withFigures = (figure: (call: { page: number | null }) => unknown, pages = [0, 1, 4]) =>
+        mockModel((call) => {
+          if (call.tool === "submitOutline") return flagged(pages);
+          if (call.tool === "submitFigure") return figure(call);
+          return goodHandler(call);
+        });
+      const slideFigures = (lessonId: string) =>
+        store.getLesson(lessonId)!.scenes.map((scene) => (scene.kind === "slide" ? scene.content?.figures?.length ?? 0 : null));
+
+      // 标了 3 页只配前 2 页；图是完整的 plot 规格，颜色、虚线都用名字
+      const plotted = newLesson();
+      const first = withFigures(() => goodFigure);
+      await generate.runLessonGeneration(plotted.lesson.id, { owner: plotted.owner, deps: { model: first.model, search: noSearch } });
+      assert.deepEqual(slideFigures(plotted.lesson.id), [1, 1, null, null, 0, null], "只配前 2 页");
+      assert.equal(first.calls.filter((call) => call.tool === "submitFigure").length, 2);
+      const figure = (store.getLesson(plotted.lesson.id)!.scenes[0] as { content?: { figures?: { t: string; curves?: { f: string; color?: string }[]; pts?: { color?: string }[] }[] } }).content!.figures![0];
+      assert.equal(figure.t, "plot");
+      assert.deepEqual(figure.curves, [{ f: "x^2", color: "red" }], "曲线补上默认颜色");
+      assert.equal(figure.pts?.[0].color, "ink");
+
+      // 模型说画不了、表达式不合格、范围里画不出曲线、调用出错：都不配图，这一页照常完成
+      const bad: [string, (call: { page: number | null }) => unknown][] = [
+        ["skip", () => ({ skip: true })],
+        ["未知函数", () => ({ ...goodFigure, curves: [{ f: "foo(x)" }] })],
+        ["曲线不在范围里", () => ({ ...goodFigure, y: [100, 200] })],
+        ["没有曲线也没有直线", () => ({ ...goodFigure, curves: [] })],
+        ["范围颠倒", () => ({ ...goodFigure, x: [3, -3] })],
+        [
+          "调用出错",
+          () => {
+            throw new Error("upstream down");
+          },
+        ],
+      ];
+      for (const [label, figureOf] of bad) {
+        const unlucky = newLesson();
+        const run = withFigures(figureOf, [0]);
+        await generate.runLessonGeneration(unlucky.lesson.id, { owner: unlucky.owner, deps: { model: run.model, search: noSearch } });
+        const done = store.getLesson(unlucky.lesson.id)!;
+        assert.equal(done.status, "ready", `${label}：整节课照常完成`);
+        assert.ok(done.scenes.every((scene) => scene.status === "ready"), `${label}：每一页都生成好了`);
+        assert.deepEqual(slideFigures(unlucky.lesson.id).slice(0, 1), [0], `${label}：不配图`);
+      }
+
+      // 校园课程不配图，没标 figure 的课程不多调用
+      const plain = newLesson();
+      const none = withFigures(() => goodFigure, []);
+      await generate.runLessonGeneration(plain.lesson.id, { owner: plain.owner, deps: { model: none.model, search: noSearch } });
+      assert.equal(none.calls.filter((call) => call.tool === "submitFigure").length, 0, "没标 figure 就不调用");
     }
 
     // ---------- 6. 上游报错：友好文案 ----------
@@ -403,7 +490,7 @@ async function main() {
       assert.match(partial.feedback, /演示模式/);
     }
 
-    console.log("PASS: prompts, pipeline steps, retry with feedback, failed page + resume, unsuitable topic, source cleanup, friendly errors, single run per lesson, no model, discussion gate, material mode, short-answer grading");
+    console.log("PASS: prompts, pipeline steps, retry with feedback, failed page + resume, unsuitable topic, source cleanup, friendly errors, single run per lesson, no model, discussion gate, material mode, short-answer grading, formula cleanup, optional figure generation");
   } finally {
     getDb().close();
     fs.rmSync(dir, { recursive: true, force: true });

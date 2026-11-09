@@ -1,9 +1,11 @@
 "use client";
 
 import { ScenePlaceholder, SceneView } from "@/components/learn/classroom";
+import { FigureList } from "@/components/learn/figure";
 import { GeneratingState } from "@/components/learn/generating-state";
 import { DiscussionScene } from "@/components/learn/scenes/discussion-scene";
 import { SourceProvider } from "@/components/learn/source-badges";
+import type { Figure } from "@/lib/learn/figure";
 import { demoLesson, previewLesson } from "@/lib/learn/fixtures";
 import type { Lesson, LessonScene } from "@/lib/learn/schema";
 
@@ -39,6 +41,40 @@ const discussion: Extract<LessonScene, { kind: "discussion" }> = {
 };
 const stage = (step: Lesson["step"], scenes: Lesson["scenes"] = []): Lesson => ({ ...previewLesson, step, scenes, status: "generating" });
 
+// 模型生成的函数图（没写标签位置，由 labels.ts 自动避让）：二次函数、供需曲线
+const generatedFigures: Figure[] = [
+  {
+    t: "plot",
+    x: [-3, 3],
+    y: [-1, 9],
+    title: "y = x² 的图像",
+    caption: "抛物线开口向上，顶点在原点 (0, 0)，是最低点；x 越大，y 增长越快。",
+    xl: "x",
+    yl: "y",
+    curves: [{ f: "x^2", color: "blue" }],
+    pts: [
+      { x: 0, y: 0, label: "顶点 (0, 0)", color: "red" },
+      { x: 1, y: 1, label: "(1, 1)", color: "ink" },
+      { x: 2, y: 4, label: "(2, 4)", color: "ink" },
+      { x: -2, y: 4, label: "(-2, 4)", color: "ink" },
+    ],
+  },
+  {
+    t: "plot",
+    x: [0, 110],
+    y: [0, 55],
+    title: "供给与需求曲线的交点",
+    caption: "需求曲线向右下、供给曲线向右上，两线交于 Q=60、P=20，即均衡点。",
+    xl: "Q（数量）",
+    yl: "P（价格）",
+    curves: [
+      { f: "(100-x)/2", color: "blue" },
+      { f: "(x-20)/2", color: "red" },
+    ],
+    pts: [{ x: 60, y: 20, label: "E (60, 20)", color: "ink" }],
+  },
+];
+
 export function LearnPreview() {
   return (
     <SourceProvider sources={previewLesson.sources}>
@@ -59,6 +95,10 @@ export function LearnPreview() {
             </Section>
           ),
         )}
+
+        <Section title="图像 · 模型生成的函数图（点的名字自动避让）">
+          <FigureList figures={generatedFigures} />
+        </Section>
 
         <Section title="第 7 页 · discussion（发言需要课程存在于服务器，预览课程会提示出错）">
           <DiscussionScene scene={discussion} lesson={previewLesson} />

@@ -43,6 +43,7 @@ export const outlineSceneSchema = z.object({
   title: text(24).describe("页面标题，≤16 字，中性简短，不出现老师名字"),
   goal: text(80).describe("这一页的学习目标，一句话"),
   keyPoints: z.array(text(60)).min(1).max(5).describe("这一页要讲或要考的 1-5 个具体要点"),
+  figure: z.boolean().optional().describe("仅学科课的讲解页：这一页讲函数、方程、几何关系，适合配一张函数图像时填 true；其他情况省略"),
 });
 
 export const outlineSchema = z
@@ -219,7 +220,8 @@ export const SCENE_TOOLS = {
 
 // ---------- 存储与接口里的课程 ----------
 export type SceneStatus = "pending" | "generating" | "ready" | "failed";
-type SceneBase = { id: string; title: string; goal: string; keyPoints: string[]; status: SceneStatus; error?: string };
+// figure：大纲里标记这一页要配图（生成完内容后再单独调用一次画图，画不出来就不配）
+type SceneBase = { id: string; title: string; goal: string; keyPoints: string[]; figure?: boolean; status: SceneStatus; error?: string };
 export type LessonScene =
   | (SceneBase & { kind: "slide"; content?: StoredSlideContent })
   | (SceneBase & { kind: "quiz"; content?: QuizContent })

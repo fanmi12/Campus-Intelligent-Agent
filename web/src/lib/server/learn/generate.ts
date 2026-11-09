@@ -1,15 +1,18 @@
 import { RetryError, type LanguageModel, type LanguageModelUsage } from "ai";
+import { sanitizeMath } from "@/lib/learn/math/sanitize";
 import {
   outlineSchema,
   SCENE_TOOLS,
   type Lesson,
   type SceneKind,
   type SlideContent,
+  type StoredSlideContent,
   type SummaryContent,
 } from "@/lib/learn/schema";
 import { getLearnModel } from "../ai/models";
 import { readImages, type ImageInput } from "../ai/vision";
 import { ChatQueueError, type QueueOwner } from "../chat-queue";
+import { generateFigure } from "./figure-gen";
 import { learnJobs, learnQueuePositions } from "./jobs";
 import {
   COMMON_RULES,
@@ -30,6 +33,7 @@ import { generateStructured } from "./structured";
 
 const TOTAL_TIMEOUT_MS = 6 * 60_000;
 const PAGE_CONCURRENCY = 3;
+const MAX_FIGURE_PAGES = 2;
 const MAX_MATERIAL_CHARS = 12000;
 const PAGE_FAILED = "这一页没生成成功";
 const SCENE_TOKENS: Record<SceneKind, number> = { slide: 2500, quiz: 2500, flashcards: 1500, discussion: 1200, summary: 2000 };
@@ -106,14 +110,16 @@ function mapStrings(value: unknown, fn: (text: string) => string): unknown {
 }
 
 // 生成后的清洗（直接修正，不报错）：
+// - 公式：模型各种写法的 LaTeX 整理成页面能渲染的 $…$，解析不了的退回纯文字；
 // - 出处编号只保留资料里真有的。非校园课程没有参考资料，不动正文，免得误伤 a[1] 这类写法；
-// - 讲解词是读出来的：去掉开头偶尔带的「狮老师：」，校园课程里也不留编号
+// - 讲解词是读出来的：去掉开头偶尔带的「狮老师：」，不留公式符号，校园课程里也不留编号
 function cleanContent(kind: SceneKind, content: unknown, lesson: Lesson): unknown {
   const campus = lesson.grounding === "campus";
   const valid = new Set(campus ? lesson.sources.map((source) => source.n) : []);
-  const cleaned = campus ? mapStrings(content, (text) => text.replace(CITATION, (marker, n: string) => (valid.has(Number(n)) ? marker : ""))) : content;
+  const typeset = mapStrings(content, (text) => sanitizeMath(text));
+  const cleaned = campus ? mapStrings(typeset, (text) => text.replace(CITATION, (marker, n: string) => (valid.has(Number(n)) ? marker : ""))) : typeset;
   const spoken = (text: string) => {
-    const plain = text.replace(SPEAKER_PREFIX, "");
+    const plain = sanitizeMath(text.replace(SPEAKER_PREFIX, ""), true);
     return campus ? plain.replace(CITATION, "").replace(/\s{2,}/g, " ").trim() : plain;
   };
   if (kind === "slide") {
@@ -240,6 +246,8 @@ export async function runLessonGeneration(id: string, options: GenerationOptions
 
     // 4. 逐页：按顺序、并发 3，一页失败不影响其他页
     const todo = lesson.scenes.flatMap((scene, index) => (scene.status === "pending" ? [index] : []));
+    // 配图的页：大纲标了 figure 的讲解页，最多 MAX_FIGURE_PAGES 页
+    const figurePages = new Set(lesson.scenes.flatMap((scene, index) => (scene.kind === "slide" && scene.figure ? [index] : [])).slice(0, MAX_FIGURE_PAGES));
     let lastError: unknown;
     const writeStarted = Date.now();
     await mapLimit(todo.length, PAGE_CONCURRENCY, async (position) => {
@@ -261,7 +269,14 @@ export async function runLessonGeneration(id: string, options: GenerationOptions
           signal,
           onUsage,
         });
-        (scene as { content?: unknown }).content = cleanContent(scene.kind, content, lesson);
+        const cleaned = cleanContent(scene.kind, content, lesson);
+        // 学科课里大纲标了要配图的讲解页：再用一次调用画图，画不出来就不配（不影响这一页）
+        if (scene.kind === "slide" && figurePages.has(index) && lesson.grounding !== "campus") {
+          const slide = cleaned as StoredSlideContent;
+          const figure = await generateFigure({ model, lesson, index, slide, sources: promptSources, material, signal, onUsage });
+          if (figure) slide.figures = [figure];
+        }
+        (scene as { content?: unknown }).content = cleaned;
         scene.status = "ready";
         delete scene.error;
       } catch (error) {
