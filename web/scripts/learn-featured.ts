@@ -2,7 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { sceneToText } from "../src/lib/learn/scene-text";
-import type { Lesson, Level, Minutes } from "../src/lib/learn/schema";
+import { LESSON_ID, type Lesson, type Level, type Minutes } from "../src/lib/learn/schema";
 import { ensureKnowledgeIndexed } from "../src/lib/server/kb/ingest";
 import { runLessonGeneration } from "../src/lib/server/learn/generate";
 import { createLessonRecord, deleteLesson, getLesson } from "../src/lib/server/learn/store";
@@ -34,8 +34,8 @@ const TOPICS: readonly Topic[] = [
   { slug: "linear-algebra-gauss", topic: "线性代数：用高斯消元法解线性方程组", grounding: "general" },
   { slug: "calculus-derivative", topic: "高等数学：导数的直观理解和常用求导法则", grounding: "general" },
   { slug: "probability-bayes", topic: "概率论：条件概率与贝叶斯公式", grounding: "general" },
-  { slug: "data-structure-stack-queue", topic: "数据结构：栈和队列", grounding: "general" },
-  { slug: "economics-supply-demand", topic: "经济学原理：供给、需求与均衡价格", grounding: "general" },
+  { slug: "ds-stack-queue", topic: "数据结构：栈和队列", grounding: "general" },
+  { slug: "econ-supply-demand", topic: "经济学原理：供给、需求与均衡价格", grounding: "general" },
 ];
 
 const OWNER = { client: "featured-script", ip: "local" };
@@ -114,6 +114,8 @@ async function main() {
     void _error;
     void _requested;
     const now = Date.now();
+    // 课程 id 要符合接口的格式（最长 24 个字符），slug 太长的话接口会当成不存在
+    if (!LESSON_ID.test(`f-${item.slug}`)) throw new Error(`slug「${item.slug}」太长：f-${item.slug} 超过 24 个字符`);
     const featured: Lesson = { ...rest, id: `f-${item.slug}`, featured: true, status: "ready", step: "done", createdAt: now, updatedAt: now };
     fs.writeFileSync(path.join(FEATURED_DIR, `${item.slug}.json`), `${JSON.stringify(featured, null, 2)}\n`);
     const reportFile = path.join(reportDir, `featured-review-${item.slug}.md`);
