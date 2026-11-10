@@ -3,14 +3,17 @@ import { normalizeEvent, tools, type AppTools } from "@/lib/ai/tools";
 import type { AppDataParts, SourceItem } from "@/lib/ai/types";
 import type { ResultReference } from "@/lib/ai/result-schemas";
 import { campusFoods } from "@/lib/campus-food";
+import type { QueueOwner } from "../chat-queue";
+import { env, hasWebSearch } from "../env";
 import { ATTACHMENT_ONLY_NOTE } from "../kb/markdown";
-import { hasWebSearch } from "../env";
 import { readWebPage, searchWeb, WebSearchError } from "../web-search";
 
 // 每次对话创建，来源编号、调用预算不会串到其他用户或并发请求。
 export function createChatTools({
-  question, sources, signal, onSources, onProgress, userEvidence = question, sourceContents,
+  question, sources, signal, onSources, onProgress, userEvidence = question, sourceContents, owner,
 }: {
+  // 创建课程要按浏览器计数、排队，所以需要提问者标识；没有就没法创建课程
+  owner?: QueueOwner;
   question: string;
   userEvidence?: string;
   sourceContents?: Map<number, string>;
@@ -102,6 +105,26 @@ export function createChatTools({
         const proof = evidence(basis, sourceNumbers);
         if (!/\d{4}[-/]\d{1,2}[-/]\d{1,2}|\d{1,2}月\d{1,2}[日号]?|今天|明天|后天|[下本这]周[一二三四五六日天]/.test(proof.text)) throw new Error("还缺少明确的考试日期，请提供考试通知或日期后再生成备忘卡。");
         return { event: { ...normalizeEvent({ ...event, kind: "exam" }, 0), kind: "exam" as const }, checklist, basis, references: proof.references };
+      },
+    }),
+    createLesson: tool({
+      ...tools.createLesson,
+      execute: async ({ topic, minutes, level }) => {
+        signal.throwIfAborted();
+        if (!env.learn.enabled) throw new Error("小狮课堂暂未开放");
+        if (!owner) throw new Error("暂时没法创建课程，请刷新页面后再试");
+        // 用到时才加载：课程生成依赖 next/server，离线测试和脚本不需要
+        const { LessonRefusedError, startLesson } = await import("../learn/start");
+        try {
+          // 就近取 5 / 10 / 15 分钟；依据交给服务端判断（和学校有关就查校园资料）
+          const near = minutes === undefined ? 10 : ([5, 10, 15] as const).reduce((best, item) => (Math.abs(item - minutes) < Math.abs(best - minutes) ? item : best));
+          const started = startLesson({ topic, level: level ?? "入门", minutes: near, grounding: "auto" }, owner);
+          return { id: started.id, topic, url: `/learn/${started.id}`, status: started.status };
+        } catch (error) {
+          // 配额、排队已满等拒绝原因本身就是给同学看的中文短句
+          if (error instanceof LessonRefusedError) throw new Error(error.message);
+          throw error;
+        }
       },
     }),
     searchWeb: tool({

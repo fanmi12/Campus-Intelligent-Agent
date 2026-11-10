@@ -1,12 +1,12 @@
 "use client";
 
-import { Check, EyeOff, Loader2, LogIn, RefreshCw, RotateCcw } from "lucide-react";
+import { Check, EyeOff, Loader2, LogIn, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import { useActionState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { QuestionStatus } from "@/lib/server/logs";
-import { login, rebuildKnowledge, updateQuestionStatus, type LoginState } from "./actions";
+import { deleteLessonAction, login, rebuildKnowledge, updateQuestionStatus, type LoginState } from "./actions";
 
 export function LoginForm() {
   const [state, action, pending] = useActionState<LoginState, FormData>(login, {});
@@ -81,5 +81,30 @@ export function StatusButtons({ id, status }: { id: string; status: QuestionStat
         忽略
       </Button>
     </div>
+  );
+}
+
+export function LessonDeleteButton({ id, title }: { id: string; title: string }) {
+  const [pending, startTransition] = useTransition();
+  return (
+    <Button
+      size="xs"
+      variant="ghost"
+      disabled={pending}
+      onClick={() => {
+        if (!window.confirm(`删除这节课？\n《${title}》\n删除后链接失效，无法恢复。`)) return;
+        startTransition(async () => {
+          try {
+            await deleteLessonAction(id);
+            toast.success("课程已删除");
+          } catch (error) {
+            toast.error(error instanceof Error ? error.message : "删除失败");
+          }
+        });
+      }}
+    >
+      {pending ? <Loader2 className="animate-spin" /> : <Trash2 />}
+      删除
+    </Button>
   );
 }

@@ -1,4 +1,4 @@
-import { ArrowLeft, BookOpen, CircleHelp, LogOut, MessagesSquare, ShieldAlert, ThumbsUp, Target, Timer } from "lucide-react";
+import { ArrowLeft, BookOpen, CircleCheck, CircleHelp, GraduationCap, LogOut, MessagesSquare, ShieldAlert, ThumbsUp, Target, Timer, Trophy } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -9,10 +9,11 @@ import { site } from "@/lib/config";
 import { adminEnabled, isAdmin } from "@/lib/server/admin-auth";
 import { hasEmbedding, hasRerank, hasVision, isDemoMode } from "@/lib/server/env";
 import { knowledgeOverview } from "@/lib/server/kb/ingest";
+import { getRecentLearnStats } from "@/lib/server/learn/store";
 import { getStats, listGaps, listRecent, type QuestionRow } from "@/lib/server/logs";
 import { cn } from "@/lib/utils";
 import { logout } from "./actions";
-import { LoginForm, RebuildButton, StatusButtons } from "./admin-client";
+import { LessonDeleteButton, LoginForm, RebuildButton, StatusButtons } from "./admin-client";
 
 export const metadata: Metadata = { title: "管理后台", robots: { index: false, follow: false } };
 
@@ -176,6 +177,7 @@ export default async function AdminPage() {
   const gaps = listGaps();
   const recent = listRecent(60);
   const kb = knowledgeOverview();
+  const learn = getRecentLearnStats(7);
   const rated = stats.likes + stats.dislikes;
 
   return (
@@ -231,6 +233,7 @@ export default async function AdminPage() {
         <TabsList>
           <TabsTrigger value="gaps">待补充 {gaps.length > 0 && `(${gaps.length})`}</TabsTrigger>
           <TabsTrigger value="recent">最近提问</TabsTrigger>
+          <TabsTrigger value="learn">小狮课堂</TabsTrigger>
           <TabsTrigger value="kb">知识库</TabsTrigger>
         </TabsList>
 
@@ -244,6 +247,53 @@ export default async function AdminPage() {
 
         <TabsContent value="recent" className="mt-4">
           <QuestionList rows={recent} empty="还没有人提问" />
+        </TabsContent>
+
+        <TabsContent value="learn" className="mt-4 space-y-3">
+          <p className="flex items-start gap-1.5 text-xs leading-5 text-muted-foreground">
+            <CircleHelp className="mt-0.5 size-3.5 shrink-0" />
+            近 7 天的课程生成与学习情况（学习数据匿名，只统计次数和得分）。内容有问题的课程可以在下面删除。
+          </p>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+            <Stat icon={GraduationCap} label="生成课程" value={String(learn.generated)} hint={`成功 ${learn.ready} · 失败 ${learn.failed}`} />
+            <Stat
+              icon={CircleCheck}
+              label="生成成功率"
+              value={learn.ready + learn.failed ? `${Math.round((learn.ready / (learn.ready + learn.failed)) * 100)}%` : "—"}
+              hint="成功 ÷（成功 + 失败）"
+              tone={learn.failed > learn.ready ? "warning" : undefined}
+            />
+            <Stat icon={Trophy} label="学完人次" value={String(learn.finished)} hint="点了「完成课程」的次数" />
+            <Stat icon={Target} label="平均得分" value={learn.avgScore === null ? "—" : String(learn.avgScore)} hint="学完时的测验得分" />
+            <Stat icon={Timer} label="平均生成耗时" value={learn.avgGenerateMs === null ? "—" : `${(learn.avgGenerateMs / 1000).toFixed(0)} 秒`} hint="从开始备课到全部完成" />
+          </div>
+          {learn.recent.length === 0 ? (
+            <div className="rounded-2xl border border-dashed p-10 text-center text-sm text-muted-foreground">还没有人生成课程</div>
+          ) : (
+            <ul className="divide-y overflow-hidden rounded-2xl border bg-card">
+              {learn.recent.map((lesson) => (
+                <li key={lesson.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 p-4 text-sm">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">{lesson.title}</div>
+                    <div className="truncate text-xs text-muted-foreground">{lesson.topic}</div>
+                  </div>
+                  <span className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                    <Tag tone={lesson.status === "ready" ? "success" : lesson.status === "failed" ? "destructive" : "warning"}>
+                      {lesson.status === "ready" ? "已完成" : lesson.status === "failed" ? "失败" : "生成中"}
+                    </Tag>
+                    <Tag>{lesson.views} 次浏览</Tag>
+                    <span>{timeFormat.format(lesson.createdAt)}</span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Button size="xs" variant="secondary" nativeButton={false} render={<Link href={`/learn/${lesson.id}`} target="_blank" />}>
+                      查看
+                    </Button>
+                    <LessonDeleteButton id={lesson.id} title={lesson.title} />
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </TabsContent>
 
         <TabsContent value="kb" className="mt-4 space-y-3">

@@ -21,6 +21,14 @@ export function getChatModel(): LanguageModel | null {
   return createProvider("llm", baseURL, apiKey, extraBody).chatModel(model);
 }
 
+// 小狮课堂生成课程用的模型：默认和对话模型相同（同一服务商、同一把 Key），LEARN_MODEL 可以单独换一个更强的
+export function getLearnModel(): LanguageModel | null {
+  const { baseURL, apiKey, model, extraBody } = env.llm;
+  const learnModel = env.learn.model ?? model;
+  if (!baseURL || !apiKey || !learnModel) return null;
+  return createProvider("learn", baseURL, apiKey, env.learn.extraBody ?? extraBody).chatModel(learnModel);
+}
+
 export function getVisionModel(): LanguageModel | null {
   const { baseURL, apiKey, model, extraBody } = env.vision;
   if (!baseURL || !apiKey || !model) return null;

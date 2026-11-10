@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 
-export type AppStatus = { demo: boolean; vision: boolean; semanticSearch: boolean; webSearch: boolean };
+export type LearnStatus = { enabled: boolean; discussion: boolean; tts: "server" | "browser" };
+// learn 在旧版本服务端里没有，读取时要容错
+export type AppStatus = { demo: boolean; vision: boolean; semanticSearch: boolean; webSearch: boolean; learn?: LearnStatus };
 
 export function useAppStatus(): AppStatus | null {
   const [status, setStatus] = useState<AppStatus | null>(null);

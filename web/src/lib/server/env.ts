@@ -86,6 +86,17 @@ export const env = {
   // 每个浏览器滚动一分钟最多提问次数；同一公网出口（校园网、现场 Wi-Fi）同时排队和处理中的上限
   chatClientRateLimit: Math.floor(readNumber("CHAT_CLIENT_RATE_LIMIT", 6)),
   chatIpActiveLimit: Math.floor(readNumber("CHAT_IP_ACTIVE_LIMIT", 40)),
+  // 小狮课堂（AI 互动微课）。模型和附加参数不填就沿用对话模型
+  learn: {
+    enabled: read("LEARN_ENABLED") !== "false",
+    model: read("LEARN_MODEL"),
+    extraBody: readObject("LEARN_EXTRA_BODY"),
+    // 同时生成的课程数、排队上限、每个浏览器 24 小时内可生成的课程数、同一公网出口同时备课上限
+    concurrency: Math.floor(readNumber("LEARN_CONCURRENCY", 2)),
+    queueCapacity: Math.floor(readNumber("LEARN_QUEUE_CAPACITY", 20)),
+    dailyLimit: Math.floor(readNumber("LEARN_DAILY_LIMIT", 10)),
+    ipActiveLimit: Math.floor(readNumber("LEARN_IP_ACTIVE_LIMIT", 20)),
+  },
 };
 
 // 没配置大模型时进入演示模式：不调用任何外部接口，用模拟回复跑通界面

@@ -14,6 +14,14 @@ export const site = {
     questions: 10,
     minutes: 2,
   },
+  // 小狮课堂（AI 互动微课）：入口、首页文案和示例主题
+  learn: {
+    name: "小狮课堂",
+    tagline: "一句话，备一节互动微课",
+    description: "输入想学的内容，狮老师帮你备一节 5-15 分钟的互动微课：讲解、测验、闪卡、讨论，学完还能生成复习计划。",
+    examples: ["线性代数：矩阵乘法怎么算", "高数：导数的直观理解", "概率论：贝叶斯公式", "Python 入门：for 循环", "数据结构：栈和队列", "四级听力的答题技巧"],
+    credit: "课堂形式参考了清华大学开源项目 OpenMAIC 的设计",
+  },
   suggestions: [
     {
       icon: "map",
@@ -36,7 +44,7 @@ export const site = {
       title: "办事清单",
       prompt: "复学申请有哪些步骤？帮我整理成可以勾选的办事清单。",
     },
-    { icon: "study", title: "英语复习卡", prompt: "帮我复习几个校园通知中常见的英语单词，做成翻面卡和小测验。" },
+    { icon: "study", title: "AI 小课堂", prompt: "给我上一节 5 分钟的小课：线性代数里的矩阵乘法。" },
     { icon: "contact", title: "招生联系卡", prompt: "学校招生咨询电话是多少？帮我整理成联系卡。" },
   ],
 } as const;

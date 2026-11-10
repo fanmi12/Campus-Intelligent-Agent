@@ -1,0 +1,16 @@
+/* 公式和矩阵。颜色全部继承当前文字颜色，深浅色都能用。 */
+
+.math { display: inline; }
+/* 浏览器原生 MathML：指定带 OpenType MATH 表的字体，分式线、根号、上下标才会排得正 */
+.math math { font-size: 1.1em; math-style: normal; font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", "Noto Sans Math", serif; }
+.plain { font-family: "Cambria Math", "STIX Two Math", serif; font-size: 1.04em; }
+.fail { border-radius: 4px; background: color-mix(in oklch, var(--destructive) 10%, transparent); padding: 0 3px; font-family: var(--font-mono); font-size: 0.9em; }
+
+/* 矩阵 */
+.mat { display: inline-flex; align-items: stretch; margin: 0.1em 0.2em; line-height: 1.25; vertical-align: middle; }
+.matBracket { width: 0.34em; border: 0.09em solid currentColor; }
+.matLeft { border-right: 0; border-radius: 0.25em 0 0 0.25em; }
+.matRight { border-left: 0; border-radius: 0 0.25em 0.25em 0; }
+.matGrid { display: inline-grid; align-items: center; }
+.matCell { padding: 0.1em 0.5em; text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.matAug { border-left: 0.09em dashed currentColor; }

@@ -93,6 +93,7 @@ function ChatSession({
   session,
   demo,
   visionEnabled,
+  learnEnabled,
   onNewChat,
   onOpenHistory,
   onOpenPrivacy,
@@ -102,6 +103,7 @@ function ChatSession({
   session: SavedChat;
   demo: boolean;
   visionEnabled: boolean;
+  learnEnabled: boolean;
   onNewChat: () => void;
   onOpenHistory: () => void;
   onOpenPrivacy: () => void;
@@ -143,6 +145,7 @@ function ChatSession({
         surveySubmitted={survey.submitted}
         canReset={messages.length > 0 && !busy}
         busy={busy}
+        learnEnabled={learnEnabled}
       />
 
       {demo && (
@@ -251,6 +254,7 @@ export default function ChatApp() {
         session={session}
         demo={appStatus?.demo ?? false}
         visionEnabled={appStatus?.vision ?? false}
+        learnEnabled={appStatus?.learn?.enabled ?? true}
         onHistoryChange={setChats}
         onNewChat={newChat}
         onOpenHistory={() => setHistoryOpen(true)}

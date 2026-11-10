@@ -1,8 +1,9 @@
 "use client";
 
-import { ClipboardList, Ellipsis, History, LayoutDashboard, Monitor, Moon, ShieldCheck, SquarePen, Sun } from "lucide-react";
+import { ClipboardList, Ellipsis, GraduationCap, History, LayoutDashboard, Monitor, Moon, ShieldCheck, SquarePen, Sun } from "lucide-react";
+import Link from "next/link";
 import { useTheme } from "next-themes";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +24,7 @@ export function ChatHeader({
   surveySubmitted = false,
   canReset,
   busy = false,
+  learnEnabled = true,
 }: {
   onNewChat?: () => void;
   onOpenHistory?: () => void;
@@ -31,6 +33,8 @@ export function ChatHeader({
   surveySubmitted?: boolean;
   canReset?: boolean;
   busy?: boolean;
+  // 小狮课堂入口；服务端关闭了课堂功能时隐藏（默认显示，这样加载中的骨架顶栏也有入口）
+  learnEnabled?: boolean;
 }) {
   const { setTheme } = useTheme();
   return (
@@ -44,6 +48,11 @@ export function ChatHeader({
             {site.school} · {site.tagline}
           </div>
         </div>
+        {learnEnabled && (
+          <Link href="/learn" aria-label={site.learn.name} title={site.learn.name} className={buttonVariants({ variant: "ghost", size: "icon" })}>
+            <GraduationCap />
+          </Link>
+        )}
         {/* 回答中不能切换对话，否则这次回答来不及保存 */}
         <Button variant="ghost" size="icon" onClick={onOpenHistory} disabled={!onOpenHistory || busy} aria-label="历史对话">
           <History />
@@ -72,6 +81,12 @@ export function ChatHeader({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
+            {learnEnabled && (
+              <DropdownMenuItem render={<Link href="/learn" />}>
+                <GraduationCap />
+                {site.learn.name}
+              </DropdownMenuItem>
+            )}
             {/* 对话里的问卷邀请关掉后，这里是常驻入口 */}
             {onOpenSurvey && (
               <DropdownMenuItem onClick={onOpenSurvey}>
